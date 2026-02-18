@@ -4,8 +4,8 @@
 // Configuration
 const MAX_CONCURRENT_TEST_KEYS = 1;
 const MAX_TOTAL_TEST_KEYS = 3;
-const TEST_KEY_DURATION_MS = 0 * 0 * 0 * 60 * 1000;
-const REFERRALS_NEEDED_FOR_TEST = 1;
+const TEST_KEY_DURATION_MS = 3 * 24 * 60 * 60 * 1000;
+const REFERRALS_NEEDED_FOR_TEST = 5;
 
 class LocalStorageDB {
     constructor() {
