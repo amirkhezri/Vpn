@@ -1,92 +1,62 @@
-// === LocalStorage Database for VPN Web App ===
-// Using localStorage for all data persistence (works with static hosting like Render)
+// --- LocalStorage Database for VPN Web App ---
+// Using localStorage for all data persistence (no backend needed)
 
 // Configuration
 const MAX_CONCURRENT_TEST_KEYS = 1;
 const MAX_TOTAL_TEST_KEYS = 3;
-const TEST_KEY_DURATION_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
+const TEST_KEY_DURATION_MS = 3 * 24 * 60 * 60 * 1000;
 const REFERRALS_NEEDED_FOR_TEST = 5;
-const REFERRALS_NEEDED_FOR_REWARD = 5;
-const FREE_MONTHS_PER_5_REFERRALS = 1;
 
 class LocalStorageDB {
     constructor() {
-        this.dbName = 'shinobuVpnDB';
+        this.dbName = 'vpnAppDB';
         this.usersCollection = 'users';
-        this.referralsCollection = 'referrals';
-        this.settingsCollection = 'settings';
         this.cache = {};
         this.initializeDatabase();
         this.loadFromStorage();
     }
 
     initializeDatabase() {
+        // Auto-create database structure if not exists
         if (!localStorage.getItem(this.dbName)) {
             const initialDB = {
                 users: {},
-                referrals: {},
+                testKeys: [],
                 settings: {
                     createdAt: new Date().toISOString(),
                     version: '1.0.0'
                 }
             };
             localStorage.setItem(this.dbName, JSON.stringify(initialDB));
-            console.log('[DB] Database initialized');
+            console.log('Database initialized automatically');
         }
     }
 
     loadFromStorage() {
         const stored = localStorage.getItem(this.dbName);
         if (stored) {
-            try {
-                this.cache = JSON.parse(stored);
-            } catch (e) {
-                console.error('[DB] Error loading data:', e);
-                this.cache = { users: {}, referrals: {}, settings: {} };
-            }
+            this.cache = JSON.parse(stored);
         }
     }
 
     saveToStorage() {
-        try {
-            localStorage.setItem(this.dbName, JSON.stringify(this.cache));
-        } catch (e) {
-            console.error('[DB] Error saving data:', e);
-        }
+        localStorage.setItem(this.dbName, JSON.stringify(this.cache));
     }
 
     getUsers() {
         return this.cache[this.usersCollection] || {};
     }
 
-    getReferrals() {
-        return this.cache[this.referralsCollection] || {};
-    }
-
-    // === User Operations ===
+    // User operations
     async getUser(telegramId) {
         const users = this.getUsers();
         return users[telegramId] || null;
     }
 
-    async createUser(telegramId, referralCode = null) {
+    async createUser(telegramId) {
         const users = this.getUsers();
-        
-        // Check if referral code is valid and process it
-        let referredBy = null;
-        if (referralCode) {
-            const referrer = await this.getUserByReferralCode(referralCode);
-            if (referrer) {
-                referredBy = referrer.telegram_id;
-                // Increment referrer's invited count
-                await this.incrementInvitedCount(referrer.telegram_id);
-            }
-        }
-
         const user = {
-            telegram_id: String(telegramId),
-            referral_code: this.generateReferralCode(),
-            referred_by: referredBy,
+            telegram_id: telegramId,
             // Test key data
             test_keys_used: 0,
             current_test_key: null,
@@ -97,18 +67,14 @@ class LocalStorageDB {
             subscription_expiry: null,
             balance: 0,
             trial_used: false,
-            trial_expiry: null,
             status: 'inactive',
             // Metadata
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
         };
-
         users[telegramId] = user;
         this.cache[this.usersCollection] = users;
         this.saveToStorage();
-        
-        console.log('[DB] User created:', telegramId);
         return user;
     }
 
@@ -117,47 +83,21 @@ class LocalStorageDB {
         if (!user) {
             user = await this.createUser(telegramId);
         }
-        
         const users = this.getUsers();
         users[telegramId] = {
             ...users[telegramId],
             ...data,
             updated_at: new Date().toISOString()
         };
-        
         this.cache[this.usersCollection] = users;
         this.saveToStorage();
         return users[telegramId];
     }
 
-    // === Referral Operations ===
-    generateReferralCode() {
-        return 'S' + Math.random().toString(36).substring(2, 8).toUpperCase();
-    }
-
-    async getUserByReferralCode(code) {
-        const users = this.getUsers();
-        for (const id in users) {
-            if (users[id].referral_code === code) {
-                return users[id];
-            }
-        }
-        return null;
-    }
-
-    async incrementInvitedCount(telegramId) {
-        const user = await this.getUser(telegramId);
-        if (!user) return null;
-        
-        const newCount = (user.invited_count || 0) + 1;
-        return this.updateUser(telegramId, { invited_count: newCount });
-    }
-
-    // === Test Key Operations ===
+    // Test key operations
     async incrementTestKeysUsed(telegramId) {
         const user = await this.getUser(telegramId);
         if (!user) return null;
-        
         const newCount = (user.test_keys_used || 0) + 1;
         return this.updateUser(telegramId, { test_keys_used: newCount });
     }
@@ -177,6 +117,7 @@ class LocalStorageDB {
         });
     }
 
+    // Clear all test key data for a user (for testing)
     async clearUserTestKeys(telegramId) {
         return this.updateUser(telegramId, {
             test_keys_used: 0,
@@ -186,33 +127,29 @@ class LocalStorageDB {
         });
     }
 
+    async updateInvitedCount(telegramId, count) {
+        return this.updateUser(telegramId, { invited_count: count });
+    }
+
     canGetNewTest(user) {
         if (!user) return { allowed: true, reason: null };
         
-        // Check if there's an active test key
         if (user.test_key_expiry && user.test_key_expiry > Date.now()) {
-            return { allowed: false, reason: 'active_test', expiry: user.test_key_expiry };
+            return { allowed: false, reason: 'active_test' };
         }
         
-        // Check if max test keys used
         if (user.test_keys_used >= MAX_TOTAL_TEST_KEYS) {
             return { allowed: false, reason: 'max_used' };
         }
         
-        // Check if more test keys need referrals
         if (user.test_keys_used > 0 && user.invited_count < REFERRALS_NEEDED_FOR_TEST) {
-            return { 
-                allowed: false, 
-                reason: 'need_referrals',
-                needed: REFERRALS_NEEDED_FOR_TEST,
-                current: user.invited_count
-            };
+            return { allowed: false, reason: 'need_referrals' };
         }
         
         return { allowed: true, reason: null };
     }
 
-    // === Subscription Operations ===
+    // Subscription operations
     async setSubscription(telegramId, vlessKey, expiryTimestamp) {
         return this.updateUser(telegramId, {
             vless_key: vlessKey,
@@ -222,10 +159,8 @@ class LocalStorageDB {
     }
 
     async activateTrial(telegramId) {
-        const expiry = Date.now() + (TRIAL_DAYS || 3) * 24 * 60 * 60 * 1000;
         return this.updateUser(telegramId, {
             trial_used: true,
-            trial_expiry: expiry,
             status: 'active'
         });
     }
@@ -234,26 +169,10 @@ class LocalStorageDB {
         return this.updateUser(telegramId, { balance });
     }
 
-    async addToBalance(telegramId, amount) {
-        const user = await this.getUser(telegramId);
-        const newBalance = (user?.balance || 0) + amount;
-        return this.updateUser(telegramId, { balance: newBalance });
-    }
-
-    // === Reward Calculation ===
-    getFreeMonths(invitedCount) {
-        if (!invitedCount || invitedCount < REFERRALS_NEEDED_FOR_REWARD) {
-            return 0;
-        }
-        return Math.floor(invitedCount / REFERRALS_NEEDED_FOR_REWARD) * FREE_MONTHS_PER_5_REFERRALS;
-    }
-
-    // === Data Export ===
     async getAllData() {
         return {
             users: this.getUsers(),
-            referrals: this.getReferrals(),
-            settings: this.cache[this.settingsCollection] || {},
+            settings: this.cache.settings || {},
             dbName: this.dbName,
             initialized: true
         };
@@ -274,7 +193,3 @@ window.localStorageDB = localStorageDB;
 window.TEST_KEY_DURATION_MS = TEST_KEY_DURATION_MS;
 window.MAX_TOTAL_TEST_KEYS = MAX_TOTAL_TEST_KEYS;
 window.REFERRALS_NEEDED_FOR_TEST = REFERRALS_NEEDED_FOR_TEST;
-window.REFERRALS_NEEDED_FOR_REWARD = REFERRALS_NEEDED_FOR_REWARD;
-window.FREE_MONTHS_PER_5_REFERRALS = FREE_MONTHS_PER_5_REFERRALS;
-
-console.log('[DB] LocalStorageDB initialized');
