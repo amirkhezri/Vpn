@@ -748,4 +748,47 @@ window.toggleTestQrCode = () => {
     qrBtn.classList.add('btn-primary');
 };
 
+function showTrialKey(key, expire) {
+    const keyBox = document.getElementById("vpn-key");
+    const timerBox = document.getElementById("trial-timer");
 
+    keyBox.textContent = key;
+
+    startTimer(expire, timerBox);
+
+    keyBox.style.display = "block";
+}
+
+function showTrialError(code) {
+    const msgBox = document.getElementById("trial-message");
+
+    const messages = {
+        active_trial: "You already have an active trial.",
+        trial_limit: "Free trials finished.",
+        no_keys: "No test keys available.",
+        server_error: "Server error. Try again."
+    };
+
+    msgBox.textContent = messages[code] || "Error";
+}
+
+function startTimer(expire, el) {
+    function tick() {
+        const diff = expire - Date.now();
+
+        if (diff <= 0) {
+            el.textContent = "Expired";
+            return;
+        }
+
+        const d = Math.floor(diff / 86400000);
+        const h = Math.floor(diff / 3600000) % 24;
+        const m = Math.floor(diff / 60000) % 60;
+        const s = Math.floor(diff / 1000) % 60;
+
+        el.textContent = `${d}d ${h}h ${m}m ${s}s`;
+    }
+
+    tick();
+    setInterval(tick, 1000);
+}
