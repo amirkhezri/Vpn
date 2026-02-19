@@ -1,201 +1,215 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>Toni vpn v3.0</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=2.2"></script>
-    <script src="static.js"></script> <script src="db.js"></script> <script src="main.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <title>Shinobu VPN - اتصال امن</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 </head>
 <body>
-    <div class="version-tag">v3.1</div>
-    
-    <div class="controls-container">
-        <button class="control-btn" id="lang-toggle-btn" aria-label="Change Language">
-            <span class="lang-text">RU</span>
-        </button>
-    </div>
-
-    <div id="toast-container-box" class="toast-container"></div>
-
-    <div class="grid-background"></div>
-    <div class="orb orb1"></div>
-    <div class="orb orb2"></div>
-
-    <div class="container">
-        
-        <header>
-            <div class="logo">Toni vpn</div>
-            <div class="tagline" data-i18n="tagline">Ваша приватность — наш приоритет</div>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Shinobu VPN</span>
+                </div>
+                <button id="lang-toggle-btn" class="lang-toggle">
+                    <i class="fas fa-globe"></i>
+                    <span class="lang-text">FA</span>
+                </button>
+            </div>
         </header>
 
-        <div class="user-info-header">
-            <div class="user-avatar" id="user-avatar-placeholder">
-                <i class="fas fa-user"></i>
-            </div>
-            <div class="user-details">
-                <h3 id="user-full-name">Loading...</h3>
-                <p>ID: <span id="telegram-id-display">...</span></p>
-                <p>Username: <span id="username-display">...</span></p>
-            </div>
-        </div>
-
+        <!-- Navigation -->
         <nav class="nav-tabs">
             <button class="nav-btn active" data-target="profile">
-                <i class="fas fa-user"></i> <span data-i18n="nav_profile">Профиль</span>
+                <i class="fas fa-user"></i>
+                <span data-i18n="nav_profile">پروفایل</span>
             </button>
-            <button class="nav-btn" data-target="billing">
-                <i class="fas fa-wallet"></i> <span data-i18n="nav_billing">Оплата</span>
-            </button>
-            <button class="nav-btn" data-target="instructions">
-                <i class="fas fa-mobile-alt"></i> <span data-i18n="nav_setup">Настройка</span>
+            <button class="nav-btn" data-target="subscription">
+                <i class="fas fa-key"></i>
+                <span data-i18n="nav_subscription">اشتراک</span>
             </button>
             <button class="nav-btn" data-target="referral">
-                <i class="fas fa-users"></i> <span data-i18n="nav_referral">Рефералка</span>
+                <i class="fas fa-share-alt"></i>
+                <span data-i18n="nav_referral">رفرارل</span>
+            </button>
+            <button class="nav-btn" data-target="downloads">
+                <i class="fas fa-download"></i>
+                <span data-i18n="nav_downloads">دانلود</span>
+            </button>
+            <button class="nav-btn" data-target="instructions">
+                <i class="fas fa-question-circle"></i>
+                <span data-i18n="nav_instructions">راهنما</span>
             </button>
         </nav>
-        
+
+        <!-- Main Content -->
         <main>
-            <section id="profile" class="active"> 
-                <h2 class="section-title"><i class="fas fa-key"></i> <span data-i18n="title_status">Ваш Статус</span></h2>
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
-                        <h3 data-i18n="balance_label">Ваш Баланс:</h3>
-                        <div style="font-size: 1.5em; font-weight: bold; color: #00d4ff;" id="user-balance-display">0,00 ₽</div>
+            <!-- Profile Section -->
+            <section id="profile" class="active">
+                <div class="user-card">
+                    <div class="user-avatar" id="user-avatar-placeholder">
+                        <i class="fas fa-user"></i>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h3 data-i18n="status_label">Текущий статус:</h3>
-                        <div id="status-indicator" class="status-indicator status-inactive" data-i18n="loading">Загрузка</div>
+                    <div class="user-info">
+                        <h2 id="user-full-name">کاربر</h2>
+                        <p class="user-id">ID: <span id="telegram-id-display">-</span></p>
+                        <p class="username">@ <span id="username-display">-</span></p>
                     </div>
-                    <div id="status-info" style="line-height: 1.6;">
-                        <p><span data-i18n="expiry_label">Дата истечения:</span> <span id="expiry-date">...</span></p>
-                    </div>
+                </div>
 
-                    <div id="renew-container" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
-                        <button class="btn btn-renew nav-btn-proxy" data-target-tab="billing">
-                            <i class="fas fa-sync-alt"></i> <span data-i18n="renew_btn">Продлить подписку</span>
+                <div class="status-card">
+                    <div class="status-header">
+                        <span class="status-indicator status-inactive" id="status-indicator">غیرفعال</span>
+                    </div>
+                    <div class="status-info" id="status-info">
+                        <p>تاریخ انقضا: <span id="expiry-date">-</span></p>
+                    </div>
+                    <div id="renew-container" style="display: none;">
+                        <button class="btn btn-warning nav-btn-proxy" data-target-tab="subscription">
+                            <i class="fas fa-renew"></i>
+                            <span data-i18n="renew_subscription">تمدید اشتراک</span>
                         </button>
                     </div>
+                </div>
 
-                    <div style="margin-top: 20px;">
-                        <div class="vless-container">
-                            <div class="vless-link-box" id="vless-link-display" data-i18n="loading_key">Загрузка ключа...</div>
-                        </div>
-                        <div class="grid-2" style="margin-top: 10px;"> 
-                            <button class="btn vless-copy-btn" id="copy-vless-btn">
-                                <i class="fas fa-copy"></i> <span data-i18n="copy_btn">Копировать</span>
-                            </button>
-                            <button class="btn" id="toggle-qr-btn">
-                                <i class="fas fa-qrcode"></i> <span data-i18n="qr_btn">QR-код</span>
-                            </button>
-                        </div>
-                        
-                        <div id="qr-code-display" class="card" style="display: none; text-align: center; margin-top: 15px; padding: 20px;">
-                            <h4 style="color: #00d4ff; margin-bottom: 10px;" data-i18n="qr_title">Сканируйте ключ</h4>
-                            <div id="qr-code-placeholder"></div>
-                            <p style="margin-top: 10px; font-size: 0.8em; opacity: 0.7;" data-i18n="qr_note">Используйте этот код в приложении для настройки.</p>
-                        </div>
+                <div class="balance-card">
+                    <div class="balance-header">
+                        <span data-i18n="balance_label">موجودی کیف پول</span>
+                    </div>
+                    <div class="balance-amount">
+                        <span id="user-balance-display">0.00</span>
+                        <span class="currency">₽</span>
                     </div>
                 </div>
 
-                <h2 class="section-title"><i class="fas fa-gift"></i> <span data-i18n="title_trial">Пробный Период</span></h2>
-                <div class="card" id="trial-card-status" style="text-align: center;" data-i18n="loading">Загрузка...</div>
-
-                <!-- Test Key Section -->
-                <div id="test-key-section" style="display: none; margin-top: 20px;">
-                    <h2 class="section-title"><i class="fas fa-key"></i> <span data-i18n="test_key_title">Ваш Тестовый Ключ</span></h2>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <span></span>
-                        <span id="test-key-countdown" style="color: #00ff00; font-weight: bold; font-size: 1.1em;"></span>
-                    </div>
-                    <div class="card">
-                        <div class="vless-container">
-                            <div class="vless-link-box" id="test-key-display">...</div>
-                        </div>
-                        <div class="grid-2" style="margin-top: 10px;">
-                            <button class="btn vless-copy-btn" id="copy-test-key-btn">
-                                <i class="fas fa-copy"></i> <span data-i18n="copy_btn">Копировать</span>
-                            </button>
-                            <button class="btn" id="toggle-test-qr-btn">
-                                <i class="fas fa-qrcode"></i> <span data-i18n="qr_btn">QR-код</span>
-                            </button>
-                        </div>
-                        
-                        <div id="test-qr-code-display" class="card" style="display: none; text-align: center; margin-top: 15px; padding: 20px;">
-                            <h4 style="color: #00d4ff; margin-bottom: 10px;" data-i18n="qr_title">Сканируйте ключ</h4>
-                            <div id="test-qr-code-placeholder"></div>
-                            <p style="margin-top: 10px; font-size: 0.8em; opacity: 0.7;" data-i18n="qr_note">Используйте этот код в приложении для настройки.</p>
-                        </div>
+                <!-- Trial Section -->
+                <div class="trial-card" id="trial-card">
+                    <h3><i class="fas fa-gift"></i> <span data-i18n="trial_title">نسخه رایگان</span></h3>
+                    <p data-i18n="trial_description">3 روز رایگان با تمام امکانات</p>
+                    <div id="trial-card-status">
+                        <button class="btn btn-primary" id="start-trial-btn">
+                            <i class="fas fa-gift"></i>
+                            <span data-i18n="trial_btn">دریافت نسخه رایگان</span>
+                        </button>
                     </div>
                 </div>
             </section>
-            
-            <section id="billing">
-                <h2 class="section-title"><i class="fas fa-wallet"></i> <span data-i18n="title_tariffs">Тарифы и Оплата</span></h2>
-                <div class="grid grid-2" id="tariff-grid"></div>
-                <div class="card warning-card">
-                    <p data-i18n="payment_warning">ВНИМАНИЕ: После оплаты вернитесь в чат с ботом. Активация — до 5 минут.</p>
+
+            <!-- Subscription Section -->
+            <section id="subscription">
+                <h2><i class="fas fa-credit-card"></i> <span data-i18n="tariffs_title">خرید اشتراک</span></h2>
+                <div class="tariff-grid" id="tariff-grid">
+                    <!-- Tariffs will be rendered here -->
+                </div>
+
+                <div class="vpn-key-section">
+                    <h3><i class="fas fa-key"></i> <span data-i18n="vpn_key">کلید VPN</span></h3>
+                    <div class="vless-display">
+                        <code id="vless-link-display">...</code>
+                        <div class="vless-actions">
+                            <button class="btn btn-secondary" id="copy-vless-btn">
+                                <i class="fas fa-copy"></i>
+                                <span data-i18n="copy">کپی</span>
+                            </button>
+                            <button class="btn btn-secondary" id="toggle-qr-btn">
+                                <i class="fas fa-qrcode"></i>
+                                <span data-i18n="qr_code">QR</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="qr-code-display" id="qr-code-display" style="display: none;">
+                        <div id="qr-code-placeholder"></div>
+                    </div>
                 </div>
             </section>
-            
+
+            <!-- Referral Section -->
             <section id="referral">
-                <h2 class="section-title"><i class="fas fa-users"></i> <span data-i18n="title_referral">Реферальная Программа</span></h2>
-                <div class="card">
-                    <h3 id="invited-count-display" style="color: #00d4ff; text-align: center; margin-bottom: 15px;">
-                        <span data-i18n="invited_text">Приглашено:</span> 0
-                    </h3>
-                    <p id="referral-desc-text" data-i18n="referral_desc">
-                        Приглашайте друзей — +10 дней подписки тебе и другу!
-                    </p>
-                    <div class="vless-container">
-                        <button class="btn vless-copy-btn" id="copy-referral-btn" style="background: linear-gradient(90deg, #7b2cbf, #9d4edd); width: 100%; margin-bottom: 5px;">
-                            <i class="fas fa-copy"></i> <span data-i18n="copy_btn">Копировать ссылку</span>
-                        </button>
-                        <div class="vless-link-box" id="referral-link-display">...</div>
+                <h2><i class="fas fa-share-alt"></i> <span data-i18n="referral_title">برنامه رفرال</span></h2>
+                <div class="referral-info">
+                    <p data-i18n="referral_description">هر دوستی که دعوت کنید، 1 ماه اشتراک رایگان دریافت می‌کنید!</p>
+                </div>
+                
+                <div class="referral-stats">
+                    <div class="stat-card">
+                        <i class="fas fa-users"></i>
+                        <span class="stat-value" id="referral-count">0</span>
+                        <span class="stat-label" data-i18n="referrals_invited">دعوت شده‌ها</span>
                     </div>
+                    <div class="stat-card">
+                        <i class="fas fa-gift"></i>
+                        <span class="stat-value" id="reward-months">0</span>
+                        <span data-i18n="free_months">ماه رایگان</span>
+                    </div>
+                </div>
+
+                <div class="referral-link-section">
+                    <h3><i class="fas fa-link"></i> <span data-i18n="your_referral_link">لینک دعوت شما</span></h3>
+                    <div class="referral-link-display">
+                        <code id="referral-link-display">...</code>
+                        <button class="btn btn-primary" id="copy-referral-btn">
+                            <i class="fas fa-copy"></i>
+                            <span data-i18n="copy_link">کپی لینک</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="referral-rules">
+                    <h3><i class="fas fa-list-ol"></i> <span data-i18n="rules">قوانین</span></h3>
+                    <ul>
+                        <li data-i18n="rule_1">دوست دعوت شده باید اشتراک بخرد</li>
+                        <li data-i18n="rule_2">5 دعوت = 1 ماه رایگان</li>
+                        <li data-i18n="rule_3">بدون محدودیت در تعداد جوایز</li>
+                    </ul>
                 </div>
             </section>
 
-            <section id="instructions">
-                <h2 class="section-title"><i class="fas fa-mobile-alt"></i> <span data-i18n="title_setup">Настройка</span></h2>
-                <h3 class="section-title-h3">
-                    <i class="fas fa-download"></i> <span data-i18n="subtitle_download">Скачать приложение</span>
-                </h3>
-                <div class="grid grid-4" id="download-grid"></div>
+            <!-- Downloads Section -->
+            <section id="downloads">
+                <h2><i class="fas fa-download"></i> <span data-i18n="download_apps">دانلود اپلیکیشن</span></h2>
+                <div class="download-grid" id="download-grid">
+                    <!-- Download buttons will be rendered here -->
+                </div>
+            </section>
 
-                <h3 class="section-title-h3">
-                    <i class="fas fa-book"></i> <span data-i18n="subtitle_instructions">Инструкции</span>
-                </h3>
-                <div class="grid grid-4" id="instructions-grid"></div>
+            <!-- Instructions Section -->
+            <section id="instructions">
+                <h2><i class="fas fa-question-circle"></i> <span data-i18n="setup_instructions">راهنمای نصب</span></h2>
+                <div class="instructions-grid" id="instructions-grid">
+                    <!-- Instruction accordions will be rendered here -->
+                </div>
             </section>
         </main>
-    </div>
-    
-    <div id="payment-modal">
-        <div class="card" id="payment-modal-content" style="max-width: 450px; width: 90%; padding: 30px; transform: scale(0.95); transition: transform 0.3s ease;">
-            <h3 style="text-align: center; color: #00d4ff; margin-bottom: 20px;">
-                <i class="fas fa-credit-card"></i> <span data-i18n="modal_title">Оплата подписки</span>
-            </h3>
-            <div id="modal-tariff-info" style="font-size: 1.1em; margin-bottom: 20px; line-height: 1.5;"></div>
-            
-            <div class="warning-card" style="margin-bottom: 20px;">
-                <p data-i18n="modal_warning">ВНИМАНИЕ! После оплаты ОБЯЗАТЕЛЬНО вернитесь в чат с ботом.</p>
-            </div>
-            
-            <div style="display: flex; gap: 10px; flex-direction: column;">
-                <button class="btn btn-primary" id="go-to-yoomoney-btn" style="width: 100%;" data-url="">
-                    <i class="fas fa-external-link-alt"></i> <span data-i18n="modal_pay_btn">Перейти к оплате</span>
-                </button>
-                <button class="btn" id="close-modal-btn" style="background: rgba(123, 44, 191, 0.2); border-color: #7b2cbf; color: #7b2cbf; width: 100%;">
-                    <i class="fas fa-times"></i> <span data-i18n="modal_close_btn">Закрыть</span>
-                </button>
+
+        <!-- Payment Modal -->
+        <div class="modal" id="payment-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 data-i18n="payment_confirmation">تایید پرداخت</h3>
+                    <button class="close-modal" id="close-modal-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="modal-tariff-info"></div>
+                    <p class="payment-info" data-i18n="payment_info">پس از پرداخت، اشتراک به صورت خودکار فعال می‌شود</p>
+                    <a class="btn btn-primary btn-block" id="go-to-yoomoney-btn" href="#" target="_blank">
+                        <i class="fas fa-credit-card"></i>
+                        <span data-i18n="go_to_payment">رفتن به پرداخت</span>
+                    </a>
+                </div>
             </div>
         </div>
+
+        <!-- Toast Notifications -->
+        <div class="toast-container" id="toast-container"></div>
     </div>
+
+    <script src="db.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>
