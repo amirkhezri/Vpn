@@ -3,15 +3,6 @@ let tg = null, telegramId = null, userId = null;
 let currentLang = localStorage.getItem('lang') || 'ru';
 let isProcessing = false; // Anti-spam lock
 
-// Environment Variables for Testing
-const ENV = {
-    DATABASE_URL: 'postgresql://dbuservpn:d5pKaJTUIR6f5vCvIoemJyHwAJQTUn85@dpg-d6a7iii48b3s73bhdvj0-a/dbvpn',
-    BOT_TOKEN: '8488517638:AAEPp5x6Lr0HnmJjBbOSyjSAIVb44MZx6C8',
-    // Test mode - set to true to enable test helpers
-    TEST_MODE: new URLSearchParams(window.location.search).get('test') === '1',
-    // Debug: reset test keys (use ?reset_test=1 in URL)
-    RESET_TEST: new URLSearchParams(window.location.search).get('reset_test') === '1'
-};
 
 const YOOMONEY_RECIPIENT_ID = '4100119271147598';
 const BOT_USERNAME = 'Toni_vpn_bot';
