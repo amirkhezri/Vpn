@@ -248,25 +248,30 @@ window.addEventListener('click', (e) => {
         showPaymentModal(months, price);
     } else if (btn.id === 'start-trial-btn') {
     lockAction(async () => {
-        // Telegram ID از WebApp
-        const tgId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'DEV_USER';
+        try {
+            const tgId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 123456789;
 
-        // درخواست trial از backend
-        const result = await requestTrial(tgId);
+            const res = await fetch("/api/trial", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ telegramId: tgId })
+            });
 
-        if(result.key){
-            // همان فانکشن UI موجود برای نمایش key و تایمر
-            showKey(result.key, result.expire);
-        } else {
-            // پیام خطا / ترغیب به referral یا خرید
-            if(result.error === "trial_limit") 
-                alert("You reached max free trials. Invite friends or buy subscription.");
-            else if(result.error === "active_trial") 
-                alert("You already have an active trial.");
-            else if(result.error === "no_keys") 
-                alert("No available test keys. Try later.");
+            const data = await res.json();
+
+            if (data.error) {
+                showTrialError(data.error);
+                return;
+            }
+
+            showTrialKey(data.key, data.expire);
+
+        } catch (err) {
+            console.error(err);
+            showTrialError("server_error");
         }
     }, 'processing');
+}
     } else if (btn.id === 'copy-test-key-btn') {
         lockAction(copyTestKey, 'processing');
     } else if (btn.id === 'toggle-test-qr-btn') {
