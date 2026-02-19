@@ -5,7 +5,8 @@ const { Pool } = require("pg");
 
 const app = express();
 app.use(express.json());
-app.use(express.static("./"));
+app.use(express.static(__dirname));
+
 
 // اتصال به دیتابیس PostgreSQL
 const pool = new Pool({
