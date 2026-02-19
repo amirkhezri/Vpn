@@ -271,7 +271,7 @@ window.addEventListener('click', (e) => {
             showTrialError("server_error");
         }
     }, 'processing');
-}
+
     } else if (btn.id === 'copy-test-key-btn') {
         lockAction(copyTestKey, 'processing');
     } else if (btn.id === 'toggle-test-qr-btn') {
