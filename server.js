@@ -15,14 +15,14 @@ const pool = new Pool({
 
 // ساخت جدول users در صورت عدم وجود
 async function initDB() {
-  await pool.query(
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       telegram_id BIGINT PRIMARY KEY,
       trial_count INT DEFAULT 0,
       referral_count INT DEFAULT 0,
       trial_expire BIGINT
     )
-  );
+  `);
 }
 initDB();
 
