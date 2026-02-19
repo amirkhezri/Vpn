@@ -256,7 +256,26 @@ window.addEventListener('click', (e) => {
         const price = parseFloat(btn.dataset.price);
         showPaymentModal(months, price);
     } else if (btn.id === 'start-trial-btn') {
-        lockAction(getTestKey, 'processing');
+    lockAction(async () => {
+        // Telegram ID از WebApp
+        const tgId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'DEV_USER';
+
+        // درخواست trial از backend
+        const result = await requestTrial(tgId);
+
+        if(result.key){
+            // همان فانکشن UI موجود برای نمایش key و تایمر
+            showKey(result.key, result.expire);
+        } else {
+            // پیام خطا / ترغیب به referral یا خرید
+            if(result.error === "trial_limit") 
+                alert("You reached max free trials. Invite friends or buy subscription.");
+            else if(result.error === "active_trial") 
+                alert("You already have an active trial.");
+            else if(result.error === "no_keys") 
+                alert("No available test keys. Try later.");
+        }
+    }, 'processing');
     } else if (btn.id === 'copy-test-key-btn') {
         lockAction(copyTestKey, 'processing');
     } else if (btn.id === 'toggle-test-qr-btn') {
