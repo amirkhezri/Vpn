@@ -54,6 +54,14 @@ app.post("/api/trial", async (req, res) => {
 
   const trialDays = parseInt(process.env.TRIAL_DAYS || "3");
   const maxTrials = parseInt(process.env.MAX_FREE_TRIAL || "3");
+  
+async function checkTrialExpiry(userId) {
+  await pool.query(`
+    UPDATE users
+    SET trial_active = false
+    WHERE id=$1 AND trial_expiry < NOW()
+  `,[userId]);
+}
 
   let user = await pool.query(
     "SELECT * FROM users WHERE telegram_id=$1",
