@@ -17,14 +17,18 @@ const pool = new Pool({
 async function initDB() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
-      telegram_id BIGINT PRIMARY KEY,
-      trial_count INT DEFAULT 0,
-      referral_count INT DEFAULT 0,
-      trial_expire BIGINT
-    )
+      id BIGINT PRIMARY KEY,
+      trial_active BOOLEAN DEFAULT FALSE,
+      trial_expiry TIMESTAMP,
+      referral_count INT DEFAULT 0
+    );
   `);
+
+  console.log("DB ready");
 }
+
 initDB();
+
 
 // مسیر فایل کلیدها
 const TEST_KEYS = path.join(__dirname, "test-keys.txt");
