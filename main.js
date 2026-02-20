@@ -652,7 +652,7 @@ async function updateTrialCard() {
     // Show trial button
     trialCard.innerHTML = `<button class="btn btn-primary" id="start-trial-btn"><i class="fas fa-gift"></i> ${t.trial_btn}</button>`;
 }
-
+};
 
    
 
