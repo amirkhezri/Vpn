@@ -118,7 +118,7 @@ window.addEventListener('load', () => {
         console.log('Test keys reset for user:', telegramId);
     }
 
-    userId = localStorage.getItem('shinobu_user_id') || 'local_' + Math.random().toString(36).substr(2, 9);
+    
     
     //
 
