@@ -4,6 +4,10 @@ const path = require("path");
 const { Pool } = require("pg");
 
 
+const app = express();
+app.use(express.json());
+app.use(express.static(__dirname));
+
 app.get("/api/user/:tg", async (req, res) => {
     const tgId = req.params.tg;
 
@@ -26,12 +30,6 @@ app.get("/api/user/:tg", async (req, res) => {
 
     return res.json(updatedUser.rows[0]);
 });
-
-
-const app = express();
-app.use(express.json());
-app.use(express.static(__dirname));
-
 
 // اتصال به دیتابیس PostgreSQL
 const pool = new Pool({
