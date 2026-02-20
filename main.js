@@ -119,8 +119,24 @@ window.addEventListener('load', () => {
     }
 
     userId = localStorage.getItem('shinobu_user_id') || 'local_' + Math.random().toString(36).substr(2, 9);
-    telegramId = tg?.initDataUnsafe?.user?.id || 'DEV_USER';
-    if (telegramId === 'DEV_USER') localStorage.setItem('shinobu_user_id', userId);
+    
+    //
+
+    
+    telegramId = tg?.initDataUnsafe?.user?.id;
+
+if (!telegramId) {
+    console.error("Telegram user ID not found!");
+    return; // stop UI
+}
+    // new
+async function getUserProfile(tgId) {
+    const res = await fetch(`/api/user/${tgId}`);
+    return res.json();
+}
+
+//
+    
     else userId = String(telegramId);
 
     let userFirstName = 'User';
