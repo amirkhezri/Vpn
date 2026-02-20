@@ -1,7 +1,9 @@
 // --- Configuration & State ---
 let tg = null, telegramId = null, userId = null;
 let currentLang = localStorage.getItem('lang') || 'ru';
-
+let tg = window.Telegram?.WebApp;
+let currentUser = null;
+let isProcessing = false; // Anti-spam lock
 
 // Environment Variables for Testing
 const ENV = {
