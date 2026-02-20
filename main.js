@@ -1,7 +1,7 @@
 // --- Configuration & State ---
 let tg = null, telegramId = null, userId = null;
 let currentLang = localStorage.getItem('lang') || 'ru';
-let isProcessing = false; // Anti-spam lock
+
 
 // Environment Variables for Testing
 const ENV = {
