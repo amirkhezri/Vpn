@@ -3,6 +3,31 @@ const fs = require("fs");
 const path = require("path");
 const { Pool } = require("pg");
 
+
+app.get("/api/user/:tg", async (req, res) => {
+    const tgId = req.params.tg;
+
+    const user = await pool.query(
+        "SELECT * FROM users WHERE telegram_id=$1",
+        [tgId]
+    );
+
+    if (!user.rows.length) {
+        await pool.query(
+            "INSERT INTO users (telegram_id) VALUES ($1)",
+            [tgId]
+        );
+    }
+
+    const updatedUser = await pool.query(
+        "SELECT * FROM users WHERE telegram_id=$1",
+        [tgId]
+    );
+
+    return res.json(updatedUser.rows[0]);
+});
+
+
 const app = express();
 app.use(express.json());
 app.use(express.static(__dirname));
