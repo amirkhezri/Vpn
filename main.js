@@ -674,65 +674,7 @@ window.getTestKey = async () => {
         return;
     }
     
-    try {
-        let user = await window.localStorageDB.getUser(telegramId);
-        
-        // Check if user can get a new test key
-        if (user) {
-            const check = window.localStorageDB.canGetNewTest(user);
-            if (!check.allowed) {
-                if (check.reason === 'active_test') {
-                    showToast(TRANSLATIONS[currentLang].trial_already_active || 'You already have an active test key!', 'error');
-                    return;
-                } else if (check.reason === 'max_used') {
-                    showToast(TRANSLATIONS[currentLang].trial_all_used || 'You have used all free tests!', 'error');
-                    return;
-                } else if (check.reason === 'need_referrals') {
-                    showToast(TRANSLATIONS[currentLang].trial_need_referrals || 'Invite more friends to get another test!', 'error');
-                    return;
-                }
-            }
-        }
-        
-        // Get test key from file
-        const response = await fetch('test-keys.txt');
-        const text = await response.text();
-        const keys = text.split('\n').filter(k => k.trim());
-        
-        if (keys.length === 0) {
-            showToast(TRANSLATIONS[currentLang].no_keys_available || 'No test keys available', 'error');
-            return;
-        }
-        
-        // Use a random key (for simplicity, just pick one)
-        const selectedKey = keys[Math.floor(Math.random() * keys.length)];
-        
-        // Create or update user
-        if (!user) {
-            await window.localStorageDB.createUser(telegramId);
-        }
-        
-        // Set active test key
-        await window.localStorageDB.setActiveTestKey(telegramId, selectedKey);
-        await window.localStorageDB.incrementTestKeysUsed(telegramId);
-        
-        // Display the key
-        document.getElementById('test-key-display').textContent = selectedKey;
-        document.getElementById('test-key-section').style.display = 'block';
-        
-        // Start countdown timer
-        startTestKeyCountdown();
-        
-        // Update trial card
-        updateTrialCard();
-        
-        showToast(TRANSLATIONS[currentLang].trial_success, 'success');
-        
-    } catch (error) {
-        console.error('Error getting test key:', error);
-        showToast('Error: ' + error.message, 'error');
-    }
-};
+    
 
    
 
