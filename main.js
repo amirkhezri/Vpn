@@ -1,6 +1,7 @@
 // --- Configuration & State ---
 let tg = null, telegramId = null, userId = null;
 let currentLang = localStorage.getItem('lang') || 'ru';
+let tg = window.Telegram?.WebApp;
 let isProcessing = false; // Anti-spam lock
 
 // Environment Variables for Testing
@@ -639,13 +640,28 @@ async function updateTrialCard() {
 }
 
 window.getTestKey = async () => {
-    if (!window.localStorageDB) {
-        showToast('Database not initialized', 'error');
-        return;
-    }
+    if (!window.Telegram || !Telegram.WebApp) {
+            showToast('Telegram WebApp not detected', 'error');
+            return;
+        }
     
     try {
-        let user = await window.localStorageDB.getUser(telegramId);
+        const user = Telegram.WebApp.initDataUnsafe?.user;
+
+        if (!user || !user.id) {
+            showToast('Unable to get Telegram User ID', 'error');
+            return;
+        }
+
+        const telegramId = user.id;
+
+        const response = await fetch('/api/trial', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ telegram_id: telegramId })
+        });
         
         // Check if user can get a new test key
         if (user) {
