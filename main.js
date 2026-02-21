@@ -461,3 +461,231 @@ window.showToast = (msg, type = 'info', dur = 3000) => {
         toast.addEventListener('transitionend', () => toast.remove());
     }, dur);
 };
+
+
+
+
+
+
+// ===== TONI VPN TRIAL SYSTEM =====
+
+let tg = window.Telegram.WebApp
+let telegramId = null
+
+function getTelegramId(){
+ try{
+  if(tg && tg.initDataUnsafe && tg.initDataUnsafe.user){
+   telegramId = tg.initDataUnsafe.user.id
+  }
+ }catch(e){
+  console.log("telegram id error")
+ }
+}
+
+getTelegramId()
+
+
+
+const trialButton = document.querySelector("#activate-trial")
+const trialContainer = document.querySelector("#trial-container")
+
+
+
+async function checkTrialStatus(){
+
+ if(!telegramId) return
+
+ try{
+
+  const res = await fetch("/api/trial/status?telegram_id="+telegramId)
+  const data = await res.json()
+
+  if(data.status==="active"){
+   showActiveKey(data.key,data.expire)
+  }
+
+  if(data.status==="limit"){
+   showLimitMessage()
+  }
+
+  if(data.status==="referral"){
+   showReferralMessage(data.need)
+  }
+
+ }catch(e){
+  console.log("status error")
+ }
+
+}
+
+
+
+async function activateTrial(){
+
+ if(!telegramId) return
+
+ try{
+
+  const res = await fetch("/api/trial/activate",{
+   method:"POST",
+   headers:{
+    "Content-Type":"application/json"
+   },
+   body:JSON.stringify({
+    telegram_id:telegramId
+   })
+  })
+
+  const data = await res.json()
+
+  if(data.status==="activated"){
+   showActiveKey(data.key,data.expire)
+  }
+
+  if(data.status==="no_keys"){
+   showNoKeys()
+  }
+
+  if(data.status==="referral"){
+   showReferralMessage()
+  }
+
+  if(data.status==="limit"){
+   showLimitMessage()
+  }
+
+ }catch(e){
+  console.log("activate error")
+ }
+
+}
+
+
+
+function showActiveKey(key,expire){
+
+ if(trialButton){
+  trialButton.style.display="none"
+ }
+
+ const box=document.createElement("div")
+
+ box.className="trial-box"
+
+ box.innerHTML=`
+ <div class="trial-key">${key}</div>
+ <div id="trial-timer"></div>
+ `
+
+ trialContainer.appendChild(box)
+
+ startTimer(expire)
+
+}
+
+
+
+function startTimer(expire){
+
+ const timer=document.getElementById("trial-timer")
+
+ const interval=setInterval(()=>{
+
+  const now=new Date().getTime()
+  const end=new Date(expire).getTime()
+
+  const distance=end-now
+
+  if(distance<=0){
+
+   clearInterval(interval)
+
+   timer.innerHTML="Expired"
+
+   location.reload()
+
+   return
+  }
+
+  const days=Math.floor(distance/(1000*60*60*24))
+  const hours=Math.floor((distance%(1000*60*60*24))/(1000*60*60))
+  const minutes=Math.floor((distance%(1000*60*60))/(1000*60))
+
+  timer.innerHTML=`${days}d ${hours}h ${minutes}m`
+
+ },1000)
+
+}
+
+
+
+function showNoKeys(){
+
+ if(!trialButton) return
+
+ trialButton.innerText="No free keys available"
+
+ setTimeout(()=>{
+  trialButton.innerText="Activate 3 Days For Free"
+ },4000)
+
+}
+
+
+
+function showReferralMessage(need=5){
+
+ if(!trialButton) return
+
+ trialButton.style.display="none"
+
+ const msg=document.createElement("div")
+
+ msg.className="referral-required"
+
+ msg.innerHTML=`
+ Invite ${need} friends to get another free trial
+ <button id="goto-referral">Referral</button>
+ `
+
+ trialContainer.appendChild(msg)
+
+ const btn=document.getElementById("goto-referral")
+
+ btn.onclick=()=>{
+  document.querySelector("#referral-section").scrollIntoView()
+ }
+
+}
+
+
+
+function showLimitMessage(){
+
+ if(!trialButton) return
+
+ trialButton.style.display="none"
+
+ const msg=document.createElement("div")
+
+ msg.className="trial-limit"
+
+ msg.innerHTML="You used too many free trials. Please buy subscription."
+
+ trialContainer.appendChild(msg)
+
+}
+
+
+
+if(trialButton){
+
+ trialButton.addEventListener("click",()=>{
+  activateTrial()
+ })
+
+}
+
+
+
+checkTrialStatus()
