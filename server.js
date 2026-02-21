@@ -210,7 +210,45 @@ cron.schedule("* * * * *", async()=>{
 
 })
 
+async function initDatabase(){
 
-app.listen(PORT,()=>{
- console.log("Server running")
+ await pool.query(`
+ CREATE TABLE IF NOT EXISTS users(
+  id SERIAL PRIMARY KEY,
+  telegram_id BIGINT UNIQUE,
+  trial_count INT DEFAULT 0,
+  referral_count INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW()
+ )
+ `)
+
+ await pool.query(`
+ CREATE TABLE IF NOT EXISTS trial_keys(
+  id SERIAL PRIMARY KEY,
+  vless_key TEXT,
+  status TEXT,
+  assigned_to BIGINT,
+  expire_at TIMESTAMP
+ )
+ `)
+
+ await pool.query(`
+ CREATE TABLE IF NOT EXISTS referrals(
+  id SERIAL PRIMARY KEY,
+  referrer_id BIGINT,
+  referred_id BIGINT,
+  created_at TIMESTAMP DEFAULT NOW()
+ )
+ `)
+
+ console.log("database ready")
+
+}
+
+initDatabase().then(()=>{
+
+ app.listen(PORT,()=>{
+  console.log("Server running")
+ })
+
 })
