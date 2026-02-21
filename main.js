@@ -21,28 +21,12 @@ window.firestore = {
     getDoc: async () => {
         try {
             // Get user data from localStorage
-            const user = await window.localStorageDB.getUser(telegramId);
-            if (!user) {
-                // Create new user if doesn't exist
-                await window.localStorageDB.createUser(telegramId);
-                return { 
-                    exists: () => false, 
-                    data: () => ({}) 
-                };
-            }
-            return { 
-                exists: () => !!user, 
-                data: () => ({
-                    vless_key: user.vless_key,
-                    subscription_expiry: user.subscription_expiry,
-                    balance: user.balance,
-                    trial_used: user.trial_used,
-                    invited_count: user.invited_count,
-                    status: user.status
-                })
-            };
+            const res = await fetch(`${API_BASE}/user/${userId}`);
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            const data = await res.json();
+            return { exists: () => !!data.vless_key || !!data.subscription_expiry, data: () => data };
         } catch (error) {
-            console.error("LocalStorage Error:", error);
+            console.error("API Error:", error);
             return { exists: () => false, data: () => ({}) };
         }
     },
