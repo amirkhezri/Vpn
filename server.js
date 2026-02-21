@@ -1,138 +1,216 @@
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
-const { Pool } = require("pg");
+import express from "express"
+import fs from "fs"
+import pkg from "pg"
+import cron from "node-cron"
+import cors from "cors"
 
-const app = express();
-app.use(express.json());
-app.use(express.static(__dirname));
+const { Pool } = pkg
 
-// =======================
-// PostgreSQL اتصال
-// =======================
+const app = express()
+
+app.use(express.json())
+app.use(cors())
+
+const PORT = process.env.PORT || 3000
+const TRIAL_DAYS = process.env.TRIAL_DAYS || 3
+const REFERRAL_REQUIRED = process.env.REFERRAL_REQUIRED || 5
+const MAX_TRIALS = process.env.MAX_TRIALS || 3
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
+ connectionString: process.env.DATABASE_URL,
+ ssl: { rejectUnauthorized: false }
+})
 
-// =======================
-// ساخت جدول صحیح
-// =======================
+const TEST_KEYS_FILE = "./test-keys.txt"
+const ACTIVE_KEYS_FILE = "./active-test-keys.txt"
 
-async function initDB() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS users (
-      telegram_id BIGINT PRIMARY KEY,
-      username TEXT,
-      photo_url TEXT,
-      referral_count INT DEFAULT 0,
-      trial_count INT DEFAULT 0,
-      trial_expiry TIMESTAMP,
-      subscription_expiry TIMESTAMP
-    );
-  `);
 
-  console.log("DB ready");
+function getFirstKey(){
+ const data = fs.readFileSync(TEST_KEYS_FILE,"utf8").split("\n").filter(x=>x.trim()!="")
+ if(data.length===0) return null
+ const key=data.shift()
+ fs.writeFileSync(TEST_KEYS_FILE,data.join("\n"))
+ return key
 }
 
-initDB();
+function addActiveKey(key){
+ fs.appendFileSync(ACTIVE_KEYS_FILE,key+"\n")
+}
 
-// =======================
-// گرفتن یا ساخت کاربر
-// =======================
+function removeActiveKey(key){
+ const data = fs.readFileSync(ACTIVE_KEYS_FILE,"utf8").split("\n").filter(x=>x.trim()!="" && x!==key)
+ fs.writeFileSync(ACTIVE_KEYS_FILE,data.join("\n"))
+}
 
-app.get("/api/user/:telegramId", async (req, res) => {
-  try {
-    const telegramId = req.params.telegramId;
+function returnKey(key){
+ fs.appendFileSync(TEST_KEYS_FILE,key+"\n")
+}
 
-    let user = await pool.query(
-      "SELECT * FROM users WHERE telegram_id=$1",
-      [telegramId]
-    );
 
-    if (!user.rows.length) {
-      await pool.query(
-        "INSERT INTO users (telegram_id) VALUES ($1)",
-        [telegramId]
-      );
 
-      user = await pool.query(
-        "SELECT * FROM users WHERE telegram_id=$1",
-        [telegramId]
-      );
-    }
+async function ensureUser(telegram_id){
 
-    res.json({
-      success: true,
-      user: user.rows[0]
-    });
+ const res = await pool.query(
+  "SELECT * FROM users WHERE telegram_id=$1",
+  [telegram_id]
+ )
 
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false });
+ if(res.rows.length===0){
+
+  await pool.query(
+   "INSERT INTO users(telegram_id,trial_count,referral_count) VALUES($1,0,0)",
+   [telegram_id]
+  )
+
+  return {
+   trial_count:0,
+   referral_count:0
   }
-});
+ }
 
-// =======================
-// Trial Activation
-// =======================
+ return res.rows[0]
+}
 
-app.post("/api/activate-trial", async (req, res) => {
-  try {
-    const { telegram_id } = req.body;
 
-    const trialDays = parseInt(process.env.TRIAL_DAYS || "3");
-    const maxTrials = parseInt(process.env.MAX_FREE_TRIAL || "3");
 
-    let user = await pool.query(
-      "SELECT * FROM users WHERE telegram_id=$1",
-      [telegram_id]
-    );
+app.get("/api/trial/status", async(req,res)=>{
 
-    if (!user.rows.length) {
-      return res.json({ success: false, error: "user_not_found" });
-    }
+ const telegram_id=req.query.telegram_id
 
-    user = user.rows[0];
+ const user=await ensureUser(telegram_id)
 
-    // limit check
-    if (user.trial_count >= maxTrials)
-      return res.json({ success: false, error: "trial_limit" });
+ const active = await pool.query(
+  "SELECT * FROM trial_keys WHERE assigned_to=$1 AND expire_at > NOW()",
+  [telegram_id]
+ )
 
-    // active trial check
-    if (user.trial_expiry && new Date(user.trial_expiry) > new Date())
-      return res.json({ success: false, error: "active_trial" });
+ if(active.rows.length>0){
 
-    const expireDate = new Date(
-      Date.now() + trialDays * 24 * 60 * 60 * 1000
-    );
+  return res.json({
+   status:"active",
+   key:active.rows[0].vless_key,
+   expire:active.rows[0].expire_at
+  })
+ }
 
-    await pool.query(
-      `UPDATE users 
-       SET trial_count = trial_count + 1,
-           trial_expiry = $1
-       WHERE telegram_id = $2`,
-      [expireDate, telegram_id]
-    );
+ if(user.trial_count>=MAX_TRIALS){
 
-    res.json({ success: true });
+  return res.json({
+   status:"limit"
+  })
+ }
 
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false });
-  }
-});
+ if(user.trial_count>0 && user.referral_count<REFERRAL_REQUIRED){
 
-// =======================
-// Fallback to index
-// =======================
+  return res.json({
+   status:"referral",
+   need:REFERRAL_REQUIRED-user.referral_count
+  })
+ }
 
-app.get("*", (_, res) =>
-  res.sendFile(path.join(__dirname, "index.html"))
-);
+ return res.json({
+  status:"available"
+ })
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () =>
-  console.log("Server running on port", PORT)
-);
+})
+
+
+
+app.post("/api/trial/activate", async(req,res)=>{
+
+ const {telegram_id}=req.body
+
+ const user=await ensureUser(telegram_id)
+
+ if(user.trial_count>=MAX_TRIALS){
+  return res.json({status:"limit"})
+ }
+
+ if(user.trial_count>0 && user.referral_count<REFERRAL_REQUIRED){
+  return res.json({status:"referral"})
+ }
+
+ const key=getFirstKey()
+
+ if(!key){
+  return res.json({status:"no_keys"})
+ }
+
+ const expire=new Date(Date.now()+TRIAL_DAYS*24*60*60*1000)
+
+ await pool.query(
+  "INSERT INTO trial_keys(vless_key,status,assigned_to,expire_at) VALUES($1,'active',$2,$3)",
+  [key,telegram_id,expire]
+ )
+
+ await pool.query(
+  "UPDATE users SET trial_count=trial_count+1 WHERE telegram_id=$1",
+  [telegram_id]
+ )
+
+ addActiveKey(key)
+
+ res.json({
+  status:"activated",
+  key,
+  expire
+ })
+
+})
+
+
+
+app.post("/api/referral/register",async(req,res)=>{
+
+ const {referrer,referred}=req.body
+
+ if(referrer==referred) return res.json({status:"ignored"})
+
+ const exists=await pool.query(
+  "SELECT * FROM referrals WHERE referred_id=$1",
+  [referred]
+ )
+
+ if(exists.rows.length>0) return res.json({status:"exists"})
+
+ await pool.query(
+  "INSERT INTO referrals(referrer_id,referred_id) VALUES($1,$2)",
+  [referrer,referred]
+ )
+
+ await pool.query(
+  "UPDATE users SET referral_count=referral_count+1 WHERE telegram_id=$1",
+  [referrer]
+ )
+
+ res.json({status:"ok"})
+
+})
+
+
+
+cron.schedule("* * * * *", async()=>{
+
+ const expired = await pool.query(
+  "SELECT * FROM trial_keys WHERE expire_at < NOW() AND status='active'"
+ )
+
+ for(const row of expired.rows){
+
+  returnKey(row.vless_key)
+
+  removeActiveKey(row.vless_key)
+
+  await pool.query(
+   "UPDATE trial_keys SET status='expired' WHERE id=$1",
+   [row.id]
+  )
+
+ }
+
+})
+
+
+app.listen(PORT,()=>{
+ console.log("Server running")
+})
