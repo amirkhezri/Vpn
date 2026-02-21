@@ -91,9 +91,16 @@ window.addEventListener('load', () => {
         userLastName = user.last_name || '';
         userUsername = user.username ? `@${user.username}` : 'None';
 
-        const initials = (userFirstName[0] + (userLastName ? userLastName[0] : '')).toUpperCase().trim();
-        const avatarPlaceholder = document.getElementById('user-avatar-placeholder');
-        if (initials) avatarPlaceholder.textContent = initials;
+    const avatarPlaceholder = document.getElementById('user-avatar-placeholder');
+
+if (user.photo_url) {
+    avatarPlaceholder.innerHTML = `<img src="${user.photo_url}" 
+        style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+} else {
+    const initials = (userFirstName[0] + (userLastName ? userLastName[0] : '')).toUpperCase().trim();
+    if (initials) avatarPlaceholder.textContent = initials;
+}
+
     }
 
     document.getElementById('telegram-id-display').textContent = telegramId;
