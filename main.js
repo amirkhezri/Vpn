@@ -15,13 +15,11 @@ const TARIFFS = [
     { months: 6, price: 618.56 }
 ];
 
-// --- LocalStorage Firestore Mock ---
-// Using localStorage instead of backend API
+// --- Firebase Mock ---
 window.firestore = {
     doc: () => ({}),
     getDoc: async () => {
         try {
-            // Get user data from localStorage
             const res = await fetch(`${API_BASE}/user/${userId}`);
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             const data = await res.json();
@@ -34,35 +32,17 @@ window.firestore = {
     setDoc: async (ref, data, { merge } = {}) => {
         try {
             if (data.action === 'activate_trial' && isProcessing) return;
-            
-            const user = await window.localStorageDB.getUser(telegramId) || 
-                await window.localStorageDB.createUser(telegramId);
-            
-            if (data.trial_used && data.status === 'active') {
-                // Activate trial
-                await window.localStorageDB.activateTrial(telegramId);
-            } else if (data.vless_key && data.subscription_expiry) {
-                // Update subscription
-                await window.localStorageDB.updateUser(telegramId, {
-                    vless_key: data.vless_key,
-                    subscription_expiry: data.subscription_expiry,
-                    status: 'active'
-                });
-            } else if (data.balance !== undefined) {
-                // Update balance
-                await window.localStorageDB.updateBalance(telegramId, data.balance);
-            } else if (data.invited_count !== undefined) {
-                // Update invited count
-                await window.localStorageDB.updateInvitedCount(telegramId, data.invited_count);
-            } else {
-                // Update other fields
-                await window.localStorageDB.updateUser(telegramId, data);
-            }
-            
+            const payload = data.trial_used && data.status === 'active' ? { action: 'activate_trial' } : { ...data, telegramId };
+            const res = await fetch(`${API_BASE}/user/${userId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             window.dispatchEvent(new Event('db-update'));
         } catch (error) {
-            console.error("LocalStorage Push Error:", error);
-            showToast('Storage error.', 'error');
+            console.error("API Push Error:", error);
+            showToast('Network error.', 'error');
             throw error;
         }
     },
@@ -96,12 +76,6 @@ window.addEventListener('load', () => {
     // Инициализация языка
     updateLanguage(currentLang);
 
-    // Test mode: Reset test keys if requested
-    if (ENV.RESET_TEST && window.localStorageDB) {
-        window.localStorageDB.clearUserTestKeys(telegramId);
-        console.log('Test keys reset for user:', telegramId);
-    }
-
     userId = localStorage.getItem('shinobu_user_id') || 'local_' + Math.random().toString(36).substr(2, 9);
     telegramId = tg?.initDataUnsafe?.user?.id || 'DEV_USER';
     if (telegramId === 'DEV_USER') localStorage.setItem('shinobu_user_id', userId);
@@ -117,16 +91,9 @@ window.addEventListener('load', () => {
         userLastName = user.last_name || '';
         userUsername = user.username ? `@${user.username}` : 'None';
 
-const avatarPlaceholder = document.getElementById('user-avatar-placeholder');
-
-if (user.photo_url) {
-    avatarPlaceholder.innerHTML = `<img src="${user.photo_url}" 
-        style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-} else {
-    const initials = (userFirstName[0] + (userLastName ? userLastName[0] : '')).toUpperCase().trim();
-    if (initials) avatarPlaceholder.textContent = initials;
-}
-
+        const initials = (userFirstName[0] + (userLastName ? userLastName[0] : '')).toUpperCase().trim();
+        const avatarPlaceholder = document.getElementById('user-avatar-placeholder');
+        if (initials) avatarPlaceholder.textContent = initials;
     }
 
     document.getElementById('telegram-id-display').textContent = telegramId;
@@ -138,12 +105,6 @@ if (user.photo_url) {
     renderInstructionButtons();
     generateReferralLink();
     window.startSubscriptionListener();
-    
-    // Initialize test key system
-    if (window.localStorageDB) {
-        updateTrialCard();
-    }
-    
     switchTab('profile');
 });
 
@@ -231,11 +192,7 @@ window.addEventListener('click', (e) => {
         const price = parseFloat(btn.dataset.price);
         showPaymentModal(months, price);
     } else if (btn.id === 'start-trial-btn') {
-        lockAction(getTestKey, 'processing');
-    } else if (btn.id === 'copy-test-key-btn') {
-        lockAction(copyTestKey, 'processing');
-    } else if (btn.id === 'toggle-test-qr-btn') {
-        toggleTestQrCode();
+        lockAction(startTrial, 'processing');
     } else if (btn.id === 'copy-vless-btn') {
         lockAction(copyVlessLink, 'processing');
     } else if (btn.id === 'toggle-qr-btn') {
@@ -454,18 +411,12 @@ window.startSubscriptionListener = async function () {
             if (qrBtn) qrBtn.disabled = false;
         }
 
-        // Let updateTrialCard handle the trial button logic (checks for active test key too)
-        if (window.localStorageDB) {
-            updateTrialCard();
+        if (data.trial_used) {
+            trialCard.innerHTML = `
+                        <p style="color: #38a169; font-weight: bold; margin-bottom: 15px;"><i class="fas fa-check-circle"></i> ${t.trial_used}.</p>
+                    `;
         } else {
-            // Fallback to old behavior if localStorageDB not available
-            if (data.trial_used) {
-                trialCard.innerHTML = `
-                            <p style="color: #38a169; font-weight: bold; margin-bottom: 15px;"><i class="fas fa-check-circle"></i> ${t.trial_used}.</p>
-                        `;
-            } else {
-                trialCard.innerHTML = `<button class="btn btn-primary" id="start-trial-btn"><i class="fas fa-gift"></i> ${t.trial_btn}</button>`;
-            }
+            trialCard.innerHTML = `<button class="btn btn-primary" id="start-trial-btn"><i class="fas fa-gift"></i> ${t.trial_btn}</button>`;
         }
 
         window.updateReferralUI(data.invited_count || 0);
