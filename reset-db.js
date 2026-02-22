@@ -3,20 +3,28 @@ import pkg from "pg"
 const { Pool } = pkg
 
 const pool = new Pool({
- connectionString: process.env.DATABASE_URL,
- ssl:{ rejectUnauthorized:false }
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 })
 
-async function reset(){
+async function resetDatabase(){
 
- await pool.query(
- TRUNCATE users, trial_keys, referrals RESTART IDENTITY
- )
+  try{
 
- console.log("database reset complete")
+    await pool.query(
+      TRUNCATE TABLE users, trial_keys, referrals RESTART IDENTITY CASCADE
+    )
 
- process.exit()
+    console.log("database reset complete")
+
+  }catch(err){
+
+    console.log("reset error:",err)
+
+  }
+
+  process.exit()
 
 }
 
-reset()
+resetDatabase()
