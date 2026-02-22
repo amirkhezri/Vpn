@@ -4,12 +4,20 @@ import pkg from "pg"
 import cron from "node-cron"
 import cors from "cors"
 
+import path from "path"
+import { fileURLToPath } from "url"
+
 const { Pool } = pkg
 
 const app = express()
 
 app.use(express.json())
 app.use(cors())
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+app.use(express.static(__dirname))
 
 const PORT = process.env.PORT || 3000
 const TRIAL_DAYS = process.env.TRIAL_DAYS || 3
@@ -20,6 +28,7 @@ const pool = new Pool({
  connectionString: process.env.DATABASE_URL,
  ssl: { rejectUnauthorized: false }
 })
+
 
 const TEST_KEYS_FILE = "./test-keys.txt"
 const ACTIVE_KEYS_FILE = "./active-test-keys.txt"
@@ -209,6 +218,11 @@ cron.schedule("* * * * *", async()=>{
  }
 
 })
+
+app.get("/",(req,res)=>{
+ res.sendFile(path.join(__dirname,"index.html"))
+})
+
 
 async function initDatabase(){
 
