@@ -198,7 +198,7 @@ window.addEventListener('click', (e) => {
         const months = parseInt(btn.dataset.months);
         const price = parseFloat(btn.dataset.price);
         showPaymentModal(months, price);
-    } else if (btn.id === 'start-trial-btn') {
+    } else if (btn.id === 'activate-trial') {
         lockAction(startTrial, 'processing');
     } else if (btn.id === 'copy-vless-btn') {
         lockAction(copyVlessLink, 'processing');
