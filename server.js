@@ -35,14 +35,13 @@ async function resetDatabase(){
 
  console.log("Resetting database...")
 
- await pool.query(
- TRUNCATE TABLE users, trial_keys, referrals RESTART IDENTITY CASCADE
- )
+ await pool.query(`
+  TRUNCATE TABLE users, trial_keys, referrals RESTART IDENTITY CASCADE
+ `)
 
  console.log("Database cleared")
 
 }
-
 const TEST_KEYS_FILE = "./test-keys.txt"
 const ACTIVE_KEYS_FILE = "./active-test-keys.txt"
 
