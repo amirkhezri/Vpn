@@ -1,17 +1,5 @@
 // --- Configuration & State ---
-const tg = window.Telegram.WebApp
-tg.ready()
-
-let telegramId = null
-
-if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-  telegramId = tg.initDataUnsafe.user.id
-}
-
-const userId = telegramId
-
-console.log("Telegram ID:", telegramId)
-
+let tg = null, telegramId = null, userId = null;
 let currentLang = localStorage.getItem('lang') || 'ru';
 let isProcessing = false; // Anti-spam lock
 
@@ -43,7 +31,25 @@ window.firestore = {
             return { exists: () => false, data: () => ({}) };
         }
     },
-    
+
+  setDoc: async (ref, data, { merge } = {}) => {
+        try {
+            if (data.action === 'activate_trial' && isProcessing) return;
+            const payload = data.trial_used && data.status === 'active' ? { action: 'activate_trial' } : { ...data, telegramId };
+            const res = await fetch(`${API_BASE}/user/${userId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            window.dispatchEvent(new Event('db-update'));
+        } catch (error) {
+            console.error("API Push Error:", error);
+            showToast('Network error.', 'error');
+            throw error;
+        }
+    },
+  
     onSnapshot: (ref, callback) => {
         let isCancelled = false;
         const poll = async () => {
