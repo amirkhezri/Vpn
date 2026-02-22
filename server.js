@@ -29,6 +29,19 @@ const pool = new Pool({
  ssl: { rejectUnauthorized: false }
 })
 
+async function resetDatabase(){
+
+ if(process.env.RESET_DB !== "true") return
+
+ console.log("Resetting database...")
+
+ await pool.query(
+ TRUNCATE TABLE users, trial_keys, referrals RESTART IDENTITY CASCADE
+ )
+
+ console.log("Database cleared")
+
+}
 
 const TEST_KEYS_FILE = "./test-keys.txt"
 const ACTIVE_KEYS_FILE = "./active-test-keys.txt"
@@ -259,7 +272,9 @@ async function initDatabase(){
 
 }
 
-initDatabase().then(()=>{
+initDatabase()
+.then(resetDatabase)
+.then(()=>{
 
  app.listen(PORT,()=>{
   console.log("Server running")
