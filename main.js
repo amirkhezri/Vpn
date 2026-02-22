@@ -247,7 +247,7 @@ window.startTrial = async () => {
 
  try{
 
-  const res = await fetch(API_BASE + "/api/trial/activate",{
+  const res = await fetch(API_BASE + "/trial/activate",{
    method:"POST",
    headers:{
     "Content-Type":"application/json"
