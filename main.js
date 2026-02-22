@@ -1,13 +1,4 @@
 // --- Configuration & State ---
-let tg = null, telegramId = null, userId = null;
-let currentLang = localStorage.getItem('lang') || 'ru';
-let isProcessing = false; // Anti-spam lock
-
-const YOOMONEY_RECIPIENT_ID = '4100119271147598';
-const BOT_USERNAME = 'Toni_vpn_bot';
-const TRIAL_DAYS = 3;
-const API_BASE = "https://toni-vpn.onrender.com:10000/api"
-
 const tg = window.Telegram.WebApp
 tg.ready()
 
@@ -20,6 +11,16 @@ if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
 const userId = telegramId
 
 console.log("Telegram ID:", telegramId)
+
+let currentLang = localStorage.getItem('lang') || 'ru';
+let isProcessing = false; // Anti-spam lock
+
+const YOOMONEY_RECIPIENT_ID = '4100119271147598';
+const BOT_USERNAME = 'Toni_vpn_bot';
+const TRIAL_DAYS = 3;
+const API_BASE = "https://toni-vpn.onrender.com:10000/api"
+
+
 
 const TARIFFS = [
     { months: 1, price: 103.10 },
