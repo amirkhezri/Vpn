@@ -469,7 +469,7 @@ window.showToast = (msg, type = 'info', dur = 3000) => {
 
 // ===== TONI VPN TRIAL SYSTEM =====
 
-
+let tg = window.Telegram.WebApp
 let telegramId = null
 
 function getTelegramId(){
