@@ -253,7 +253,7 @@ window.startTrial = async () => {
     "Content-Type":"application/json"
    },
    body:JSON.stringify({
-    telegram_id:telegramId
+    telegramId
    })
   })
 
