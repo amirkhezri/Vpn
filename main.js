@@ -6,7 +6,7 @@ let isProcessing = false; // Anti-spam lock
 const YOOMONEY_RECIPIENT_ID = '4100119271147598';
 const BOT_USERNAME = 'Toni_vpn_bot';
 const TRIAL_DAYS = 3;
-let API_BASE = '/api'
+
 
 const TARIFFS = [
     { months: 1, price: 103.10 },
@@ -29,23 +29,7 @@ window.firestore = {
             return { exists: () => false, data: () => ({}) };
         }
     },
-    setDoc: async (ref, data, { merge } = {}) => {
-        try {
-            if (data.action === 'activate_trial' && isProcessing) return;
-            const payload = data.trial_used && data.status === 'active' ? { action: 'activate_trial' } : { ...data, telegramId };
-            const res = await fetch(`${API_BASE}/user/${userId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-            window.dispatchEvent(new Event('db-update'));
-        } catch (error) {
-            console.error("API Push Error:", error);
-            showToast('Network error.', 'error');
-            throw error;
-        }
-    },
+    
     onSnapshot: (ref, callback) => {
         let isCancelled = false;
         const poll = async () => {
@@ -263,7 +247,7 @@ window.startTrial = async () => {
 
  try{
 
-  const res = await fetch(API_BASE + "/trial/activate",{
+  const res = await fetch("/api/trial/activate",{
    method:"POST",
    headers:{
     "Content-Type":"application/json"
@@ -547,7 +531,7 @@ async function checkTrialStatus(){
 
  try{
 
-  const res = await fetch(API_BASE + "/trial/status?telegram_id="+telegramId)
+  const res = await fetch("/api/trial/status?telegram_id="+telegramId)
   const data = await res.json()
 
   if(data.status==="active"){
@@ -576,7 +560,7 @@ async function activateTrial(){
 
  try{
 
-  const res = await fetch("/api/trial/activate",{
+  const res = await fetch(API_BASE + "/trial/activate",{
    method:"POST",
    headers:{
     "Content-Type":"application/json"
