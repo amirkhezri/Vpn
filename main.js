@@ -703,3 +703,10 @@ if(trialButton){
 setTimeout(()=>{
  checkTrialStatus()
 },1000)
+
+
+const tg = window.Telegram.WebApp;
+
+console.log(tg.initDataUnsafe);
+
+alert(JSON.stringify(tg.initDataUnsafe));
