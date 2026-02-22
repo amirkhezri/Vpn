@@ -8,6 +8,19 @@ const BOT_USERNAME = 'Toni_vpn_bot';
 const TRIAL_DAYS = 3;
 const API_BASE = "https://toni-vpn.onrender.com:10000/api"
 
+const tg = window.Telegram.WebApp
+tg.ready()
+
+let telegramId = null
+
+if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+  telegramId = tg.initDataUnsafe.user.id
+}
+
+const userId = telegramId
+
+console.log("Telegram ID:", telegramId)
+
 const TARIFFS = [
     { months: 1, price: 103.10 },
     { months: 2, price: 206.19 },
