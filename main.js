@@ -247,7 +247,7 @@ window.startTrial = async () => {
 
  try{
 
-  const res = await fetch("/api/trial/activate",{
+  const res = await fetch(API_BASE + "/trial/activate",{
    method:"POST",
    headers:{
     "Content-Type":"application/json"
@@ -531,7 +531,7 @@ async function checkTrialStatus(){
 
  try{
 
-  const res = await fetch("/api/trial/status?telegram_id="+telegramId)
+  const res = await fetch(API_BASE + "/trial/status?telegram_id="+telegramId)
   const data = await res.json()
 
   if(data.status==="active"){
