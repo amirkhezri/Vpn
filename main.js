@@ -1,3 +1,17 @@
+// TEST TELEGRAM DATA
+const tg = window.Telegram.WebApp;
+
+console.log(tg.initDataUnsafe);
+
+alert(JSON.stringify(tg.initDataUnsafe));
+
+
+
+// بقیه کدهای فعلی شما
+
+
+
+
 // --- Configuration & State ---
 let tg = null, telegramId = null, userId = null;
 let currentLang = localStorage.getItem('lang') || 'ru';
@@ -703,10 +717,3 @@ if(trialButton){
 setTimeout(()=>{
  checkTrialStatus()
 },1000)
-
-
-const tg = window.Telegram.WebApp;
-
-console.log(tg.initDataUnsafe);
-
-alert(JSON.stringify(tg.initDataUnsafe));
