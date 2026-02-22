@@ -6,7 +6,7 @@ let isProcessing = false; // Anti-spam lock
 const YOOMONEY_RECIPIENT_ID = '4100119271147598';
 const BOT_USERNAME = 'Toni_vpn_bot';
 const TRIAL_DAYS = 3;
-let API_BASE = localStorage.getItem('shinobu_api_base') || 'https://toni-vpn.onrender.com';
+let API_BASE = localStorage.getItem('shinobu_api_base') || 'http://127.0.0.1:5000/api';
 
 
 
@@ -275,7 +275,7 @@ window.startTrial = async () => {
     "Content-Type":"application/json"
    },
    body:JSON.stringify({
-    telegram_id:telegramId
+    telegramId:telegramId
    })
   })
 
@@ -590,7 +590,7 @@ async function activateTrial(){
     "Content-Type":"application/json"
    },
    body:JSON.stringify({
-    telegram_id:telegramId
+    telegramId:telegramId
    })
   })
 
