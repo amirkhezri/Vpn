@@ -262,48 +262,9 @@ window.showPaymentModal = (months, price) => {
 }
 
 window.startTrial = async () => {
-
- if(!telegramId) return
-
- try{
-
-  const res = await fetch(API_BASE + "/trial/activate",{
-   method:"POST",
-   headers:{
-    "Content-Type":"application/json"
-   },
-   body:JSON.stringify({
-    telegramId
-   })
-  })
-
-  const data = await res.json()
-
-  if(data.status==="activated"){
-   showActiveKey(data.key,data.expire)
-   showToast("Trial activated","success")
-  }
-
-  if(data.status==="no_keys"){
-   showToast("No free keys available","error")
-  }
-
-  if(data.status==="referral"){
-   showToast("Invite friends to unlock next trial","info")
-  }
-
-  if(data.status==="limit"){
-   showToast("Trial limit reached","error")
-  }
-
- }catch(e){
-
-  console.log(e)
-  showToast("Network error123","error")
-
- }
-
-}
+    await window.firestore.setDoc(null, { status: 'active', trial_used: true }, { merge: true });
+    showToast(TRANSLATIONS[currentLang].trial_success, 'success');
+};
 
 window.openLink = (url) => {
     tg?.openLink ? tg.openLink(url) : window.open(url, '_blank');
