@@ -423,7 +423,7 @@ window.startSubscriptionListener = async function () {
                         <p style="color: #38a169; font-weight: bold; margin-bottom: 15px;"><i class="fas fa-check-circle"></i> ${t.trial_used}.</p>
                     `;
         } else {
-            trialCard.innerHTML = `<button class="btn btn-primary" id="start-trial-btn"><i class="fas fa-gift"></i> ${t.trial_btn}</button>`;
+            trialCard.innerHTML = `<button class="btn btn-primary" id="activate-trial"><i class="fas fa-gift"></i> ${t.trial_btn}</button>`;
         }
 
         window.updateReferralUI(data.invited_count || 0);
