@@ -275,7 +275,7 @@ window.startTrial = async () => {
     "Content-Type":"application/json"
    },
    body:JSON.stringify({
-    telegramId
+    telegram_id:telegramId
    })
   })
 
@@ -301,7 +301,7 @@ window.startTrial = async () => {
  }catch(e){
 
   console.log(e)
-  showToast("Network error123","error")
+  showToast("Network error","error")
 
  }
 
@@ -590,7 +590,7 @@ async function activateTrial(){
     "Content-Type":"application/json"
    },
    body:JSON.stringify({
-    telegramId
+    telegram_id:telegramId
    })
   })
 
