@@ -1,17 +1,3 @@
-// TEST TELEGRAM DATA
-const tg = window.Telegram.WebApp;
-
-console.log(tg.initDataUnsafe);
-
-alert(JSON.stringify(tg.initDataUnsafe));
-
-
-
-// بقیه کدهای فعلی شما
-
-
-
-
 // --- Configuration & State ---
 let tg = null, telegramId = null, userId = null;
 let currentLang = localStorage.getItem('lang') || 'ru';
@@ -483,7 +469,7 @@ window.showToast = (msg, type = 'info', dur = 3000) => {
 
 // ===== TONI VPN TRIAL SYSTEM =====
 
-let tg = window.Telegram.WebApp
+
 let telegramId = null
 
 function getTelegramId(){
