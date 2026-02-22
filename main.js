@@ -6,7 +6,7 @@ let isProcessing = false; // Anti-spam lock
 const YOOMONEY_RECIPIENT_ID = '4100119271147598';
 const BOT_USERNAME = 'Toni_vpn_bot';
 const TRIAL_DAYS = 3;
-
+let API_BASE = '/api'
 
 const TARIFFS = [
     { months: 1, price: 103.10 },
