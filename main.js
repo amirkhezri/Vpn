@@ -473,13 +473,25 @@ let tg = window.Telegram.WebApp
 let telegramId = null
 
 function getTelegramId(){
+
  try{
-  if(tg && tg.initDataUnsafe && tg.initDataUnsafe.user){
+
+  tg.ready()
+
+  if(tg.initDataUnsafe && tg.initDataUnsafe.user){
+
    telegramId = tg.initDataUnsafe.user.id
+
+   console.log("Telegram ID:",telegramId)
+
   }
+
  }catch(e){
-  console.log("telegram id error")
+
+  console.log("telegram id error",e)
+
  }
+
 }
 
 getTelegramId()
@@ -688,4 +700,6 @@ if(trialButton){
 
 
 
-checkTrialStatus()
+setTimeout(()=>{
+ checkTrialStatus()
+},1000)
