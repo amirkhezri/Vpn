@@ -31,22 +31,6 @@ window.firestore = {
             return { exists: () => false, data: () => ({}) };
         }
     },
-
-  
-  
-    onSnapshot: (ref, callback) => {
-        let isCancelled = false;
-        const poll = async () => {
-            if (isCancelled) return;
-            const docSnap = await window.firestore.getDoc();
-            callback(docSnap);
-            if (!isCancelled) setTimeout(poll, 5000);
-        };
-        poll();
-        const updateListener = () => { if (!isCancelled) poll(); };
-        window.addEventListener('db-update', updateListener);
-        return () => { isCancelled = true; window.removeEventListener('db-update', updateListener); };
-    }
 };
 
 // --- Initialization ---
