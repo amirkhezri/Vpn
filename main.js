@@ -31,7 +31,25 @@ window.firestore = {
             return { exists: () => false, data: () => ({}) };
         }
     },
-
+setDoc: async (ref, data, { merge } = {}) => {
+        try {
+            if (data.action === 'activate_trial' && isProcessing) return;
+            const payload = data.trial_used && data.status === 'active'
+                ? { action: 'activate_trial' }
+                : { ...data, telegramId };
+            const res = await fetch(`${API_BASE}/user/${userId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            window.dispatchEvent(new Event('db-update'));
+        } catch (error) {
+            console.error("API Push Error:", error);
+            showToast('Network error.', 'error');
+            throw error;
+        }
+    },
     onSnapshot: (ref, callback) => {
         let isCancelled = false;
         const poll = async () => {
@@ -258,7 +276,7 @@ window.startTrial = async () => {
     "Content-Type":"application/json"
    },
    body:JSON.stringify({
-    telegramId:telegramId
+    telegram_id:telegramId
    })
   })
 
@@ -573,7 +591,7 @@ async function activateTrial(){
     "Content-Type":"application/json"
    },
    body:JSON.stringify({
-    telegramId:telegramId
+    telegram_id:telegramId
    })
   })
 
