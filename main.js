@@ -48,7 +48,7 @@ setDoc: async (ref, data, { merge } = {}) => {
     "Content-Type":"application/json"
    },
    body:JSON.stringify({
-    telegram_id:telegramId
+    telegram_id: telegramId
    })
   })
             const data = await res.json()
@@ -581,7 +581,7 @@ async function activateTrial(){
     "Content-Type":"application/json"
    },
    body:JSON.stringify({
-    telegram_id:telegramId
+    telegram_id: telegramId
    })
   })
 
