@@ -6,7 +6,19 @@ let isProcessing = false; // Anti-spam lock
 const YOOMONEY_RECIPIENT_ID = '4100119271147598';
 const BOT_USERNAME = 'Toni_vpn_bot';
 const TRIAL_DAYS = 3;
-let API_BASE = localStorage.getItem('shinobu_api_base') || 'http://127.0.0.1:5000/api';
+const getApiBase = () => {
+    const saved = localStorage.getItem('shinobu_api_base');
+    const defaultBase = `${window.location.origin}/api`;
+
+    if (!saved) return defaultBase;
+
+    const isLocalSaved = /localhost|127\.0\.0\.1/.test(saved);
+    const isLocalHost = /localhost|127\.0\.0\.1/.test(window.location.hostname);
+
+    return (isLocalSaved && !isLocalHost) ? defaultBase : saved;
+};
+
+let API_BASE = getApiBase();
 
 
 
@@ -48,30 +60,16 @@ setDoc: async (ref, data, { merge } = {}) => {
     telegram_id: telegramId
    })
   })
-            const data = await res.json()
-            
-            
-   if(data.status==="activated"){
-   showActiveKey(data.key,data.expire)
-  }
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.message || `HTTP error! status: ${res.status}`);
 
-  if(data.status==="no_keys"){
-   showNoKeys()
-  }
-
-  if(data.status==="referral"){
-   showReferralMessage()
-  }
-
-  if(data.status==="limit"){
-   showReferralMessage(data.need)
-  }
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             window.dispatchEvent(new Event('db-update'));
+            return data;
         }catch(e){
 
   console.log(e)
-  showToast("Network error123","error")
+  showToast("Network error","error")
+  throw e
 
  }
     },
@@ -292,8 +290,18 @@ window.showPaymentModal = (months, price) => {
 
 
 window.startTrial = async () => {
-    await window.firestore.setDoc(null, { status: 'active' }, { merge: true });
-    showToast(TRANSLATIONS[currentLang].trial_success, 'success');
+    const result = await window.firestore.setDoc(null, { status: 'active' }, { merge: true });
+
+    if (result?.status === 'activated') {
+        showToast(TRANSLATIONS[currentLang].trial_success, 'success');
+        return;
+    }
+
+    if (result?.status === 'no_keys') return showNoKeys();
+    if (result?.status === 'referral') return showReferralMessage(result.need);
+    if (result?.status === 'limit') return showLimitMessage();
+
+    showToast('Trial activation failed', 'error');
 };
 
 
@@ -616,22 +624,23 @@ function showActiveKey(key,expire){
 
     const trialButton = getTrialButton()
  const trialContainer = getTrialContainer()
+ const testKeySection = document.getElementById("test-key-section")
+ const trialCard = document.getElementById("trial-card-status")
  if(!trialContainer) return
     
  if(trialButton){
   trialButton.style.display="none"
  }
 
- const box=document.createElement("div")
+ if(trialCard){
+  trialCard.innerHTML = '<p style="color:#38a169;font-weight:bold;"><i class="fas fa-check-circle"></i> Trial active</p>'
+ }
+    
+ if(testKeySection){
+  testKeySection.style.display = "block"
+ }
 
- box.className="vless-container"
-
- box.innerHTML=`
- <div class="vless-link-box">${key}</div>
- <div id="trial-timer"></div>
- `
-
- trialContainer.appendChild(box)
+ trialContainer.textContent = key
 
  startTimer(expire)
 
@@ -642,7 +651,8 @@ function showActiveKey(key,expire){
 function startTimer(expire){
 
  const timer=document.getElementById("trial-timer")
-
+if(!timer) return
+    
  const interval=setInterval(()=>{
 
   const now=new Date().getTime()
