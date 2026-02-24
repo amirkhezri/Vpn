@@ -147,6 +147,9 @@ if (user.photo_url) {
     switchTab('profile');
 });
 
+// Animate entrance
+    document.querySelector('.container').classList.add('loaded');
+});
 
 // --- Event Delegation ---
 window.addEventListener('click', (e) => {
