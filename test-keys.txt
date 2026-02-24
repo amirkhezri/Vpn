@@ -1,10 +1,1 @@
-vless://test-key-001@server1.example.com:443?encryption=none&security=tls&type=ws&host=server1.example.com&path=%2Fws#TestKey0011
-vless://test-key-002@server1.example.com:443?encryption=none&security=tls&type=ws&host=server1.example.com&path=%2Fws#TestKey0021
-vless://test-key-003@server1.example.com:443?encryption=none&security=tls&type=ws&host=server1.example.com&path=%2Fws#TestKey0031
-vless://test-key-004@server1.example.com:443?encryption=none&security=tls&type=ws&host=server1.example.com&path=%2Fws#TestKey0041
-vless://test-key-005@server1.example.com:443?encryption=none&security=tls&type=ws&host=server1.example.com&path=%2Fws#TestKey0051
-vless://test-key-006@server1.example.com:443?encryption=none&security=tls&type=ws&host=server1.example.com&path=%2Fws#TestKey0061
-vless://test-key-007@server1.example.com:443?encryption=none&security=tls&type=ws&host=server1.example.com&path=%2Fws#TestKey0071
-vless://test-key-008@server1.example.com:443?encryption=none&security=tls&type=ws&host=server1.example.com&path=%2Fws#TestKey0081
-vless://test-key-009@server1.example.com:443?encryption=none&security=tls&type=ws&host=server1.example.com&path=%2Fws#TestKey0091
-vless://test-key-010@server1.example.com:443?encryption=none&security=tls&type=ws&host=server1.example.com&path=%2Fws#TestKey0101
+
