@@ -52,7 +52,7 @@ setDoc: async (ref, data, { merge } = {}) => {
   })
             const data = await res.json()
             
-             if(data.status==="activated"){
+            
    if(data.status==="activated"){
    showActiveKey(data.key,data.expire)
   }
