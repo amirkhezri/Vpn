@@ -31,7 +31,7 @@ window.firestore = {
             return { exists: () => false, data: () => ({}) };
         }
     },
-setDoc: async (ref, data, { merge } = {}) => {
+setDoc: async () => {
     if(!telegramId) return
         try {
             if (data.action === 'activateTrial' && isProcessing) return;
@@ -50,20 +50,20 @@ setDoc: async (ref, data, { merge } = {}) => {
             const data = await res.json()
             
              if(data.status==="activated"){
+   if(data.status==="activated"){
    showActiveKey(data.key,data.expire)
-   showToast("Trial activated","success")
   }
 
   if(data.status==="no_keys"){
-   showToast("No free keys available","error")
+   showNoKeys()
   }
 
   if(data.status==="referral"){
-   showToast("Invite friends to unlock next trial","info")
+   showReferralMessage()
   }
 
   if(data.status==="limit"){
-   showToast("Trial limit reached","error")
+   showLimitMessage()
   }
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             window.dispatchEvent(new Event('db-update'));
