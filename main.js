@@ -35,7 +35,7 @@ setDoc: async (ref, data, { merge } = {}) => {
     if(!telegramId) return
         try {
             if (data.action === 'activate_trial' && isProcessing) return;
-            const payload = data.trial_used && data.status === 'active'
+            const payload = data.status === 'active'
                 ? { action: 'activate_trial' }
                 : { ...data, telegramId };
             const res = await fetch("/api/trial/activate",{
@@ -289,7 +289,7 @@ window.showPaymentModal = (months, price) => {
 
 
 window.startTrial = async () => {
-    await window.firestore.setDoc(null, { status: 'active', trial_used: true }, { merge: true });
+    await window.firestore.setDoc(null, { status: 'active' });
     showToast(TRANSLATIONS[currentLang].trial_success, 'success');
 };
 
