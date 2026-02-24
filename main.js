@@ -34,9 +34,9 @@ window.firestore = {
 setDoc: async (ref, data, { merge } = {}) => {
     if(!telegramId) return
         try {
-            if (data.action === 'activateTrial' && isProcessing) return;
+            if (data.action === 'activate_trial' && isProcessing) return;
             const payload = data.trial_used && data.status === 'active'
-                ? { action: 'activateTrial' }
+                ? { action: 'activate_trial' }
                 : { ...data, telegramId };
             const res = await fetch("/api/trial/activate",{
    method:"POST",
