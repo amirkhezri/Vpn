@@ -32,16 +32,22 @@ window.firestore = {
         }
     },
 setDoc: async (ref, data, { merge } = {}) => {
+    if(!telegramId) return
         try {
-            if (data.action === 'activate_trial' && isProcessing) return;
+            if (data.action === 'activateTrial' && isProcessing) return;
             const payload = data.trial_used && data.status === 'active'
-                ? { action: 'activate_trial' }
+                ? { action: 'activateTrial' }
                 : { ...data, telegramId };
-            const res = await fetch(`${API_BASE}/user/${userId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            const res = await fetch("/api/trial/activate",{
+   method:"POST",
+   headers:{
+    "Content-Type":"application/json"
+   },
+   body:JSON.stringify({
+    telegram_id:telegramId
+   })
+  })
+            const data = await res.json()
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             window.dispatchEvent(new Event('db-update'));
         } catch (error) {
@@ -265,48 +271,9 @@ window.showPaymentModal = (months, price) => {
 
 
 window.startTrial = async () => {
-
- if(!telegramId) return
-
- try{
-
-  const res = await fetch("/api/trial/activate",{
-   method:"POST",
-   headers:{
-    "Content-Type":"application/json"
-   },
-   body:JSON.stringify({
-    telegram_id:telegramId
-   })
-  })
-
-  const data = await res.json()
-
-  if(data.status==="activated"){
-   showActiveKey(data.key,data.expire)
-   showToast("Trial activated","success")
-  }
-
-  if(data.status==="no_keys"){
-   showToast("No free keys available","error")
-  }
-
-  if(data.status==="referral"){
-   showToast("Invite friends to unlock next trial","info")
-  }
-
-  if(data.status==="limit"){
-   showToast("Trial limit reached","error")
-  }
-
- }catch(e){
-
-  console.log(e)
-  showToast("Network error123","error")
-
- }
-
-}
+    await window.firestore.setDoc(null, { status: 'active', trial_used: true }, { merge: true });
+    showToast(TRANSLATIONS[currentLang].trial_success, 'success');
+};
 
 
 
