@@ -17,6 +17,35 @@ const TARIFFS = [
     { months: 6, price: 618.56 }
 ];
 
+function getTelegramId(){
+
+ try{
+
+  tg.ready()
+
+  if(tg.initDataUnsafe && tg.initDataUnsafe.user){
+
+   telegramId = tg.initDataUnsafe.user.id
+
+   console.log("Telegram ID:",telegramId)
+
+  }
+
+ }catch(e){
+
+  console.log("telegram id error",e)
+
+ }
+
+}
+
+getTelegramId()
+
+
+
+const trialButton = document.querySelector("#activate-trial")
+const trialContainer = document.querySelector("#trial-container")
+
 // --- Firebase Mock ---
 window.firestore = {
     doc: () => ({}),
