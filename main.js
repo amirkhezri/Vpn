@@ -48,13 +48,31 @@ setDoc: async (ref, data, { merge } = {}) => {
    })
   })
             const data = await res.json()
+            
+             if(data.status==="activated"){
+   showActiveKey(data.key,data.expire)
+   showToast("Trial activated","success")
+  }
+
+  if(data.status==="no_keys"){
+   showToast("No free keys available","error")
+  }
+
+  if(data.status==="referral"){
+   showToast("Invite friends to unlock next trial","info")
+  }
+
+  if(data.status==="limit"){
+   showToast("Trial limit reached","error")
+  }
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             window.dispatchEvent(new Event('db-update'));
-        } catch (error) {
-            console.error("API Push Error:", error);
-            showToast('Network error.', 'error');
-            throw error;
-        }
+        }catch(e){
+
+  console.log(e)
+  showToast("Network error123","error")
+
+ }
     },
     onSnapshot: (ref, callback) => {
         let isCancelled = false;
