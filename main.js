@@ -24,6 +24,7 @@ const TARIFFS = [
 window.firestore = {
     doc: () => ({}),
     getDoc: async () => {
+        
         try {
             const res = await fetch(`${API_BASE}/user/${userId}`);
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -37,9 +38,9 @@ window.firestore = {
 setDoc: async (ref, data, { merge } = {}) => {
     if(!telegramId) return
         try {
-            if (data.action === 'showActiveKey' && isProcessing) return;
-            const payload = data.status === 'active'
-                ? { action: 'showActiveKey' }
+            if (data.action === 'checkTrialStatus' && isProcessing) return;
+            const payload = data.key && data.expire && data.status === 'active'
+                ? { action: 'checkTrialStatus' }
                 : { ...data, telegramId };
             const res = await fetch("/api/trial/activate",{
    method:"POST",
