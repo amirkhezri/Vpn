@@ -629,10 +629,10 @@ function showActiveKey(key,expire){
 
  const box=document.createElement("div")
 
- box.className="vless-link-box"
+ box.className="vless-container"
 
  box.innerHTML=`
- <div class="trial-key">${key}</div>
+ <div class="vless-link-box">${key}</div>
  <div id="trial-timer"></div>
  `
 
