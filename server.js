@@ -96,7 +96,11 @@ async function ensureUser(telegram_id){
 
 app.get("/api/trial/status", async(req,res)=>{
 
- const telegram_id=req.query.telegram_id
+ const telegram_id=req.query.telegram_id || req.query.telegramId
+
+ if(!telegram_id){
+  return res.status(400).json({status:"error",message:"telegram_id is required"})
+ }
 
  const user=await ensureUser(telegram_id)
 
@@ -140,6 +144,10 @@ app.get("/api/trial/status", async(req,res)=>{
 app.post("/api/trial/activate", async(req,res)=>{
 
  const {telegram_id}=req.body
+
+ if(!telegram_id){
+  return res.status(400).json({status:"error",message:"telegram_id is required"})
+ }
 
  const user=await ensureUser(telegram_id)
 
