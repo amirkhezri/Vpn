@@ -6,7 +6,19 @@ let isProcessing = false; // Anti-spam lock
 const YOOMONEY_RECIPIENT_ID = '4100119271147598';
 const BOT_USERNAME = 'Toni_vpn_bot';
 const TRIAL_DAYS = 3;
-let API_BASE = localStorage.getItem('shinobu_api_base') || 'http://127.0.0.1:5000/api';
+const getApiBase = () => {
+    const saved = localStorage.getItem('shinobu_api_base');
+    const defaultBase = `${window.location.origin}/api`;
+
+    if (!saved) return defaultBase;
+
+    const isLocalSaved = /localhost|127\.0\.0\.1/.test(saved);
+    const isLocalHost = /localhost|127\.0\.0\.1/.test(window.location.hostname);
+
+    return (isLocalSaved && !isLocalHost) ? defaultBase : saved;
+};
+
+let API_BASE = getApiBase();
 
 
 
@@ -35,14 +47,11 @@ window.firestore = {
             return { exists: () => false, data: () => ({}) };
         }
     },
-setDoc: async (ref, data, { merge } = {}) => {
-    if(!telegramId) return
+setDoc: async (ref, payload, { merge } = {}) => {
+    if(!telegramId || telegramId === "DEV_USER") return
         try {
-            if (data.action === 'checkTrialStatus' && isProcessing) return;
-            const payload = data.key && data.expire && data.status === 'active'
-                ? { action: 'checkTrialStatus' }
-                : { ...data, telegramId };
-            const res = await fetch("/api/trial/activate",{
+            if (payload.action === 'checkTrialStatus' && isProcessing) return;
+            const res = await fetch(`${API_BASE}/trial/activate`,{
    method:"POST",
    headers:{
     "Content-Type":"application/json"
@@ -51,30 +60,16 @@ setDoc: async (ref, data, { merge } = {}) => {
     telegram_id: telegramId
    })
   })
-            const data = await res.json()
-            
-            
-   if(data.status==="activated"){
-   showActiveKey(data.key,data.expire)
-  }
+            const result = await res.json();
+            if (!res.ok) throw new Error(result?.message || `HTTP error! status: ${res.status}`);
 
-  if(data.status==="no_keys"){
-   showNoKeys()
-  }
-
-  if(data.status==="referral"){
-   showReferralMessage()
-  }
-
-  if(data.status==="limit"){
-   showLimitMessage()
-  }
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             window.dispatchEvent(new Event('db-update'));
+            return result;
         }catch(e){
 
   console.log(e)
-  showToast("Network error123","error")
+  showToast("Network error","error")
+  throw e
 
  }
     },
@@ -144,6 +139,7 @@ if (user.photo_url) {
     renderInstructionButtons();
     generateReferralLink();
     window.startSubscriptionListener();
+    setTimeout(() => checkTrialStatus(), 500);
     switchTab('profile');
 });
 
@@ -233,7 +229,7 @@ window.addEventListener('click', (e) => {
         const price = parseFloat(btn.dataset.price);
         showPaymentModal(months, price);
     } else if (btn.id === 'activate-trial') {
-        lockAction(startTrial, 'processing');
+        lockAction(window.startTrial, 'processing');
     } else if (btn.id === 'copy-vless-btn') {
         lockAction(copyVlessLink, 'processing');
     } else if (btn.id === 'toggle-qr-btn') {
@@ -294,8 +290,23 @@ window.showPaymentModal = (months, price) => {
 
 
 window.startTrial = async () => {
-    await window.firestore.setDoc(null, { status: 'active' }, { merge: true });
-    showToast(TRANSLATIONS[currentLang].trial_success, 'success');
+    if (!telegramId || telegramId === 'DEV_USER' || !/^\d+$/.test(String(telegramId))) {
+        showToast('Run in Telegram mini app', 'error');
+        return;
+    }
+
+    const result = await window.firestore.setDoc(null, { status: 'active' }, { merge: true });
+
+    if (result?.status === 'activated') {
+        showToast(TRANSLATIONS[currentLang].trial_success, 'success');
+        return;
+    }
+
+    if (result?.status === 'no_keys') return showNoKeys();
+    if (result?.status === 'referral') return showReferralMessage(result.need);
+    if (result?.status === 'limit') return showLimitMessage();
+
+    showToast('Trial activation failed', 'error');
 };
 
 
@@ -513,7 +524,10 @@ function getTelegramId(){
 
  try{
 
-  tg.ready()
+  if (window.Telegram?.WebApp) {
+   tg = window.Telegram.WebApp
+   tg.ready()
+  }
 
   if(tg.initDataUnsafe && tg.initDataUnsafe.user){
 
@@ -535,18 +549,18 @@ getTelegramId()
 
 
 
-const trialButton = document.querySelector("#activate-trial")
-const trialContainer = document.querySelector("#trial-container")
+const getTrialButton = () => document.querySelector("#activate-trial")
+const getTrialContainer = () => document.querySelector("#trial-container")
 
 
 
 async function checkTrialStatus(){
 
- if(!telegramId) return
+ if(!telegramId || telegramId === "DEV_USER") return
 
  try{
 
-  const res = await fetch("/api/trial/status?telegramId="+telegramId)
+  const res = await fetch(`${API_BASE}/trial/status?telegram_id=${encodeURIComponent(telegramId)}`)
   const data = await res.json()
 
   if(data.status==="active"){
@@ -571,11 +585,11 @@ async function checkTrialStatus(){
 
 async function activateTrial(){
 
- if(!telegramId) return
+ if(!telegramId || telegramId === "DEV_USER") return
 
  try{
 
-  const res = await fetch("/api/trial/activate",{
+  const res = await fetch(`${API_BASE}/trial/activate`,{
    method:"POST",
    headers:{
     "Content-Type":"application/json"
@@ -596,7 +610,7 @@ async function activateTrial(){
   }
 
   if(data.status==="referral"){
-   showReferralMessage()
+   showReferralMessage(data.need)
   }
 
   if(data.status==="limit"){
@@ -613,20 +627,25 @@ async function activateTrial(){
 
 function showActiveKey(key,expire){
 
+ const trialButton = getTrialButton()
+ const trialContainer = getTrialContainer()
+ const testKeySection = document.getElementById("test-key-section")
+ const trialCard = document.getElementById("trial-card-status")
+ if(!trialContainer) return
+
  if(trialButton){
   trialButton.style.display="none"
  }
 
- const box=document.createElement("div")
+ if(trialCard){
+  trialCard.innerHTML = '<p style="color:#38a169;font-weight:bold;"><i class="fas fa-check-circle"></i> Trial active</p>'
+ }
 
- box.className="vless-container"
+ if(testKeySection){
+  testKeySection.style.display = "block"
+ }
 
- box.innerHTML=`
- <div class="vless-link-box">${key}</div>
- <div id="trial-timer"></div>
- `
-
- trialContainer.appendChild(box)
+ trialContainer.textContent = key
 
  startTimer(expire)
 
@@ -637,6 +656,7 @@ function showActiveKey(key,expire){
 function startTimer(expire){
 
  const timer=document.getElementById("trial-timer")
+ if(!timer) return
 
  const interval=setInterval(()=>{
 
@@ -670,6 +690,8 @@ function startTimer(expire){
 
 function showNoKeys(){
 
+ const trialButton = getTrialButton()
+
  if(!trialButton) return
 
  trialButton.innerText="No free keys available"
@@ -683,6 +705,10 @@ function showNoKeys(){
 
 
 function showReferralMessage(need=5){
+
+ const trialButton = getTrialButton()
+ const trialContainer = getTrialContainer()
+ if(!trialContainer) return
 
  if(!trialButton) return
 
@@ -702,7 +728,7 @@ function showReferralMessage(need=5){
  const btn=document.getElementById("goto-referral")
 
  btn.onclick=()=>{
-  document.querySelector("#referral-section").scrollIntoView()
+  document.querySelector("#referral")?.scrollIntoView()
  }
 
 }
@@ -710,6 +736,10 @@ function showReferralMessage(need=5){
 
 
 function showLimitMessage(){
+
+ const trialButton = getTrialButton()
+ const trialContainer = getTrialContainer()
+ if(!trialContainer) return
 
  if(!trialButton) return
 
@@ -726,17 +756,3 @@ function showLimitMessage(){
 }
 
 
-
-if(trialButton){
-
- trialButton.addEventListener("click",()=>{
-  activateTrial()
- })
-
-}
-
-
-
-setTimeout(()=>{
- checkTrialStatus()
-},1000)

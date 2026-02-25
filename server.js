@@ -94,9 +94,47 @@ async function ensureUser(telegram_id){
 
 
 
+
+app.get("/api/user/:id", async (req, res) => {
+
+ const rawId = String(req.params.id || "").trim()
+ const isTelegramId = /^\d+$/.test(rawId)
+
+ if(!isTelegramId){
+  return res.json({
+   balance: 0,
+   vless_key: null,
+   subscription_expiry: null,
+   invited_count: 0,
+   trial_used: false
+  })
+ }
+
+ const telegram_id = Number(rawId)
+ const user = await ensureUser(telegram_id)
+
+ const active = await pool.query(
+  "SELECT vless_key, expire_at FROM trial_keys WHERE assigned_to=$1 AND expire_at > NOW() ORDER BY id DESC LIMIT 1",
+  [telegram_id]
+ )
+
+ res.json({
+  balance: 0,
+  vless_key: active.rows[0]?.vless_key || null,
+  subscription_expiry: active.rows[0]?.expire_at ? Math.floor(new Date(active.rows[0].expire_at).getTime()/1000) : null,
+  invited_count: user.referral_count || 0,
+  trial_used: (user.trial_count || 0) > 0
+ })
+})
+
+
 app.get("/api/trial/status", async(req,res)=>{
 
- const telegram_id=req.query.telegram_id
+ const telegram_id=req.query.telegram_id || req.query.telegramId
+
+ if(!telegram_id){
+  return res.status(400).json({status:"error",message:"telegram_id is required"})
+ }
 
  const user=await ensureUser(telegram_id)
 
@@ -140,6 +178,10 @@ app.get("/api/trial/status", async(req,res)=>{
 app.post("/api/trial/activate", async(req,res)=>{
 
  const {telegram_id}=req.body
+
+ if(!telegram_id){
+  return res.status(400).json({status:"error",message:"telegram_id is required"})
+ }
 
  const user=await ensureUser(telegram_id)
 
