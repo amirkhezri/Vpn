@@ -6,17 +6,29 @@ let isProcessing = false; // Anti-spam lock
 const YOOMONEY_RECIPIENT_ID = '4100119271147598';
 const BOT_USERNAME = 'Toni_vpn_bot';
 const TRIAL_DAYS = 3;
-const getApiBase = () => {
-    const saved = localStorage.getItem('shinobu_api_base');
-    const defaultBase = `${window.location.origin}/api`;
 
-    if (!saved) return defaultBase;
 
-    const isLocalSaved = /localhost|127\.0\.0\.1/.test(saved);
-    const isLocalHost = /localhost|127\.0\.0\.1/.test(window.location.hostname);
 
-    return (isLocalSaved && !isLocalHost) ? defaultBase : saved;
+const normalizeApiBase = (raw) => {
+  if (!raw) return `${window.location.origin}/api`;
+  let base = raw.trim().replace(/\/+$/, ''); // remove trailing slash
+  if (!/\/api$/i.test(base)) base = `${base}/api`;
+  return base;
 };
+
+const getApiBase = () => {
+  const saved = localStorage.getItem('shinobu_api_base');
+  const defaultBase = `${window.location.origin}/api`;
+
+  const isLocalSaved = /localhost|127\.0\.0\.1/.test(saved || '');
+  const isLocalHost = /localhost|127\.0\.0\.1/.test(window.location.hostname);
+
+  if (!saved) return defaultBase;
+  if (isLocalSaved && !isLocalHost) return defaultBase;
+
+  return normalizeApiBase(saved);
+};
+
 
 let API_BASE = getApiBase();
 
