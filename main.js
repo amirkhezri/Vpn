@@ -6,29 +6,24 @@ let isProcessing = false; // Anti-spam lock
 const YOOMONEY_RECIPIENT_ID = '4100119271147598';
 const BOT_USERNAME = 'Toni_vpn_bot';
 const TRIAL_DAYS = 3;
-
-
-
 const normalizeApiBase = (raw) => {
-  if (!raw) return `${window.location.origin}/api`;
-  let base = raw.trim().replace(/\/+$/, ''); // remove trailing slash
-  if (!/\/api$/i.test(base)) base = `${base}/api`;
-  return base;
+    if (!raw) return `${window.location.origin}/api`;
+    let base = String(raw).trim().replace(/\/+$/, '');
+    if (!/\/api$/i.test(base)) base = `${base}/api`;
+    return base;
 };
 
 const getApiBase = () => {
-  const saved = localStorage.getItem('shinobu_api_base');
-  const defaultBase = `${window.location.origin}/api`;
+    const saved = localStorage.getItem('shinobu_api_base');
+    const defaultBase = `${window.location.origin}/api`;
 
-  const isLocalSaved = /localhost|127\.0\.0\.1/.test(saved || '');
-  const isLocalHost = /localhost|127\.0\.0\.1/.test(window.location.hostname);
+    if (!saved) return defaultBase;
 
-  if (!saved) return defaultBase;
-  if (isLocalSaved && !isLocalHost) return defaultBase;
+    const isLocalSaved = /localhost|127\.0\.0\.1/.test(saved);
+    const isLocalHost = /localhost|127\.0\.0\.1/.test(window.location.hostname);
 
-  return normalizeApiBase(saved);
+    return (isLocalSaved && !isLocalHost) ? defaultBase : normalizeApiBase(saved);
 };
-
 
 let API_BASE = getApiBase();
 
@@ -59,8 +54,8 @@ window.firestore = {
             return { exists: () => false, data: () => ({}) };
         }
     },
-setDoc: async (ref, data, { merge } = {}) => {
-    if(!telegramId) return
+setDoc: async (ref, payload, { merge } = {}) => {
+    if(!telegramId || telegramId === "DEV_USER") return
         try {
             if (data.action === 'checkTrialStatus' && isProcessing) return;
            const res = await fetch(`${API_BASE}/trial/activate`,{
@@ -76,7 +71,7 @@ setDoc: async (ref, data, { merge } = {}) => {
             if (!res.ok) throw new Error(data?.message || `HTTP error! status: ${res.status}`);
 
             window.dispatchEvent(new Event('db-update'));
-            return data;
+            return result;
         }catch(e){
 
   console.log(e)
@@ -302,6 +297,11 @@ window.showPaymentModal = (months, price) => {
 
 
 window.startTrial = async () => {
+ if (!telegramId || telegramId === 'DEV_USER' || !/^\d+$/.test(String(telegramId))) {
+        showToast('Run in Telegram mini app', 'error');
+        return;
+    }
+
     const result = await window.firestore.setDoc(null, { status: 'active' }, { merge: true });
 
     if (result?.status === 'activated') {
@@ -313,9 +313,9 @@ window.startTrial = async () => {
     if (result?.status === 'referral') return showReferralMessage(result.need);
     if (result?.status === 'limit') return showLimitMessage();
 
-    showToast('Trial activation failed', 'error');
+    showToast('Trial activation failed', 'error');   
 };
-
+  
 
 
 window.openLink = (url) => {
@@ -563,7 +563,7 @@ const getTrialContainer = () => document.querySelector("#trial-container")
 
 async function checkTrialStatus(){
 
- if(!telegramId) return
+ if(!telegramId || telegramId === "DEV_USER") return
 
  try{
 
@@ -592,7 +592,7 @@ async function checkTrialStatus(){
 
 async function activateTrial(){
 
- if(!telegramId) return
+ if(!telegramId || telegramId === "DEV_USER") return
 
  try{
 
